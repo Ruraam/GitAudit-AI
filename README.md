@@ -4,16 +4,16 @@ GitAudit AI est un **prototype d'analyse statique de dépôts GitHub publics**, 
 
 > ⚠️ Ce n'est **pas** un audit de sécurité complet. Les résultats sont des indices heuristiques à vérifier : il existe des faux positifs et des faux négatifs.
 
-## Fonctionnement de la version 0.1
+## Fonctionnement du prototype (v0.4 en développement)
 
 - Accepte uniquement une adresse `owner/repo` ou `https://github.com/owner/repo`.
 - Télécharge un instantané de la **branche par défaut ou d'une référence choisie** (branche, tag ou SHA) via l'API GitHub.
 - Inspecte des fichiers source **sans exécuter le code cible** et **sans extraire l'archive sur disque**.
-- Repère **20 motifs suspects** en Rust, Bash, Python et JavaScript : appels dangereux, TLS désactivé, transmutation/unsafe Rust, `eval` shell, `mktemp -u`, permissions excessives, clés privées et marqueurs TODO/FIXME.
+- Repère **40 motifs heuristiques** dans 13 familles de langages : Python, Rust, Bash, JavaScript/TypeScript, Go, Java, Kotlin, C/C++, PHP, Ruby, Swift, C# et PowerShell. Exemples : TLS désactivé, exécution dynamique, désérialisation, fonctions mémoire et permissions à examiner.
 - Génère des rapports **Markdown**, **JSON** et **HTML autonome** lisible dans un navigateur, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
 - Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
 - Chaque règle propose : *pourquoi examiner*, *action recommandée* et *validation*. Les conseils figurent dans le Markdown et l'HTML.
-- Pour les règles ciblées, masque les commentaires et les littéraux Python, ainsi que les commentaires et certaines chaînes Rust, afin de réduire les faux positifs sans introduire de dépendance. Les filtres ne remplacent pas un véritable parseur.
+- Les règles ciblées masquent certains commentaires et chaînes en Python, Rust, langages de style C, Ruby et PowerShell pour réduire les faux positifs. **Ces filtres heuristiques ne remplacent pas un parseur de chaque langage.**
 - Limite la taille des archives, des fichiers et des rapports, et signale si une analyse est partielle.
 
 ## Lancer un audit en local
@@ -43,7 +43,7 @@ Le fichier `docs/index.html` fournit une **page de présentation**, sans JavaScr
 
 Pour la publier **après validation et fusion des PR empilées** : dans le dépôt GitHub, ouvrir **Settings → Pages → Build and deployment → Deploy from a branch**, sélectionner **`main`** puis **`/docs`** et enregistrer. Le lien public apparaîtra dans les paramètres Pages seulement une fois le déploiement réussi. La disponibilité et l'éventuelle facturation restent soumises aux conditions du compte GitHub ; ne pas activer d'option payante.
 
-Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à chaque changement. Le workflow **Live smoke test - BubbleWM** exécute un audit réel et limité sur `main` et `feature/wlr-layer-shell` lors des changements de la branche de tests `test/security-regression-suite`. Les autres audits restent **manuels**.
+Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à chaque changement. Le workflow **Live smoke test - BubbleWM** exécute des audits réels et limités sur ses branches `main` et `feature/wlr-layer-shell` dans certaines branches de développement autorisées. Les audits libres de tout dépôt restent **manuels**.
 
 ## Sécurité et limites de coûts
 
@@ -51,7 +51,7 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 - Aucun accès en écriture aux dépôts analysés.
 - Pas d'identifiants bancaires, d'API de modèle payant ni de paiements.
 - Les Actions sont soumises aux quotas et aux règles de facturation GitHub : ne pas supposer un usage illimité.
-- V0.2 ajoute des règles heuristiques par langage, mais **absence de détection ≠ absence de faille**. Les constructions Rust `unsafe {}` sont classées comme **points de revue faibles**, pas comme des vulnérabilités prouvées.
+- V0.4 étend les règles heuristiques à d'autres langages, mais **absence de détection ≠ absence de faille**. Les constructions Rust `unsafe {}` sont classées comme **points de revue faibles**, pas comme des vulnérabilités prouvées.
 - Les nouvelles règles de langage utilisent des filtres légers pour supprimer les commentaires et les chaînes pertinentes dans leurs recherches. Ces filtres ne couvrent **pas toutes les syntaxes ni tous les langages** : des faux positifs et négatifs restent possibles, notamment dans les macros Rust, les chaînes shell et les f-strings Python.
 - Les règles anciennes (ex. détection d'en-tête de clé privée) continuent d'examiner le texte brut pour éviter de masquer les secrets dans des littéraux.
 - La catégorie `review` est utilisée pour les blocs Rust `unsafe` et les transmutations, car leur présence seule ne démontre pas un problème de sécurité.
@@ -64,7 +64,9 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 
 1. **V0.1** : prototype statique et rapports, CI et exécution manuelle.
 2. **V0.2 (en cours)** : 20 règles ciblées en Rust/Bash/Python/JS ; tests positifs et négatifs, audits de branches actives, **catégorisation des constats** et filtrage de sources pour améliorer la précision.
-3. **V0.3 (en cours)** : rapports HTML autonomes, accessibles dans un navigateur, recommandations humaines par règle ; ensuite, vitrine statique éventuelle. **Ce n'est pas encore un site public d'audit automatisé**.
-4. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
+3. **V0.3 (en cours)** : rapports HTML autonomes, recommandations humaines par règle et vitrine statique. **Ce n'est pas encore un site public d'audit automatisé**.
+4. **V0.4 (en cours)** : 40 règles et couverture de 13 familles de langages, tests positifs/négatifs par langage, documentation de couverture. Voir [Matrice de couverture](docs/COVERAGE.md).
+5. **À suivre** : analyse AST spécifique, fichiers de configuration, tests de dépendances et de supply chain, lint et tests d'intégration uniquement avec consentement et isolation adaptés.
+6. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
 
 Ce projet est indépendant de BubbleOS et n'y apporte aucune modification.
