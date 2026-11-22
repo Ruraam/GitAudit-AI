@@ -5,6 +5,7 @@ on:
     branches:
       - test/security-regression-suite
       - feat/rules-rust-bash-python-v0.2
+      - feat/precision-triage-v0.2
   workflow_dispatch:
 
 permissions:
@@ -58,7 +59,9 @@ jobs:
           assert data["scanned_files"] > 0, "Le dépôt n'a pas été analysé"
           assert data["scanned_lines"] > 0, "Le rapport est vide"
           assert isinstance(data["findings"], list)
-          assert all({"rule", "severity", "path", "line", "advice"} <= item.keys()
+          assert all({"rule", "severity", "path", "line", "advice", "category"} <= item.keys()
+                     for item in data["findings"])
+          assert all(item["category"] in {"risk", "review", "maintenance"}
                      for item in data["findings"])
           assert all(item["severity"] in {"high", "medium", "low"}
                      for item in data["findings"])
@@ -72,6 +75,8 @@ jobs:
               f"- Fichiers analysés : **{data['scanned_files']}**\n"
               f"- Lignes analysées : **{data['scanned_lines']}**\n"
               f"- Indices : **{len(data['findings'])}**\n"
+              f"- Risques potentiels : **{sum(x['category'] == 'risk' for x in data['findings'])}**\n"
+              f"- Revues manuelles : **{sum(x['category'] == 'review' for x in data['findings'])}**\n"
               f"- Analyse partielle : **{data['partial']}**\n"
               "\n> Diagnostic heuristique, pas une certification de sécurité.\n"
           )
@@ -81,6 +86,10 @@ jobs:
           by_rule = Counter(item["rule"] for item in data["findings"])
           print("Rule breakdown: " + ", ".join(
               f"{rule}={count}" for rule, count in sorted(by_rule.items())
+          ))
+          by_category = Counter(item["category"] for item in data["findings"])
+          print("Category breakdown: " + ", ".join(
+              f"{category}={count}" for category, count in sorted(by_category.items())
           ))
           print(
               f"BubbleWM audit {data['reference']} OK: "
