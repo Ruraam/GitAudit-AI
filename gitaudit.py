@@ -15,9 +15,10 @@ from urllib.error import URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
-from audit_filters import python_code_lines, rust_scan_views, shell_without_comments
+from audit_filters import hash_language_code, python_code_lines, rust_scan_views, shell_without_comments
 from audit_guidance import guidance_for
 from report_html import render_html
+from polyglot_rules import C_STYLE_SUFFIXES, HASH_COMMENT_SUFFIXES, SPECS
 
 MAX_DOWNLOAD = 20 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 5000
@@ -29,7 +30,7 @@ MAX_FINDINGS = 100
 SOURCE_SUFFIXES = frozenset({
     ".py", ".sh", ".bash", ".rs", ".js", ".jsx", ".ts", ".tsx",
     ".go", ".c", ".h", ".cpp", ".hpp", ".java", ".rb", ".php",
-    ".kt", ".swift", ".yaml", ".yml", ".toml", ".json", ".html",
+    ".kt", ".swift", ".cs", ".ps1", ".yaml", ".yml", ".toml", ".json", ".html",
 })
 SOURCE_NAMES = frozenset({"Dockerfile", "Makefile"})
 IGNORED_PARTS = frozenset({
@@ -148,6 +149,11 @@ RULES = (
          re.compile(r"\b(?:TODO|FIXME)\b"), None,
          "Vérifier si le travail signalé est toujours nécessaire.",
          category="maintenance"),
+) + tuple(
+    Rule(
+        spec.identifier, spec.severity, spec.title, re.compile(spec.pattern),
+        frozenset(spec.suffixes), spec.advice, True, spec.category,
+    ) for spec in SPECS
 )
 
 
@@ -266,6 +272,7 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             suffix = rel.suffix.lower()
             python_code = python_code_lines(lines) if suffix in PY else None
             rust_views = rust_scan_views(lines) if suffix == ".rs" else None
+            c_views = rust_scan_views(lines) if suffix in C_STYLE_SUFFIXES else None
             for line_number, line in enumerate(lines, 1):
                 for rule in RULES:
                     if rule.suffixes is not None and suffix not in rule.suffixes:
@@ -279,6 +286,18 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
                             candidate = (
                                 without_comments if rule.identifier == "RS004"
                                 else only_code
+                            )
+                        elif c_views is not None:
+                            no_comments, code_only = c_views[line_number - 1]
+                            candidate = (
+                                no_comments if rule.identifier == "GO002"
+                                else code_only
+                            )
+                            if suffix == ".php":
+                                candidate = shell_without_comments(candidate)
+                        elif suffix in HASH_COMMENT_SUFFIXES:
+                            candidate = hash_language_code(
+                                line, powershell=(suffix == ".ps1")
                             )
                         elif suffix in SHELL:
                             candidate = shell_without_comments(line)

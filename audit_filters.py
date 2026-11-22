@@ -172,3 +172,34 @@ def shell_without_comments(line: str) -> str:
         ):
             return line[:index]
     return line
+
+
+def hash_language_code(line: str, *, powershell: bool = False) -> str:
+    """Mask simple Ruby/PowerShell strings and hash comments, preserving offsets.
+
+    This is intentionally line-oriented: it does not recognize heredocs or
+    PowerShell here-strings, and cannot replace a real language parser.
+    """
+    result = list(line)
+    quote: str | None = None
+    escape = False
+    escape_character = "\`" if powershell else "\\"
+
+    for index, char in enumerate(line):
+        if quote is not None:
+            result[index] = " "
+            if escape:
+                escape = False
+            elif char == escape_character:
+                escape = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in "'\"":
+            quote = char
+            result[index] = " "
+        elif char == "#":
+            for remainder in range(index, len(result)):
+                result[remainder] = " "
+            break
+    return "".join(result)
