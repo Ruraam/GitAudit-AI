@@ -15,7 +15,7 @@ from urllib.error import URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
-from audit_filters import hash_language_code, python_code_lines, rust_scan_views, shell_without_comments
+from audit_filters import hash_language_code, js_scan_views, python_code_lines, rust_scan_views, shell_without_comments
 from audit_guidance import guidance_for
 from report_html import render_html
 from polyglot_rules import C_STYLE_SUFFIXES, HASH_COMMENT_SUFFIXES, SPECS
@@ -328,7 +328,12 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             suffix = rel.suffix.lower()
             python_code = python_code_lines(lines) if suffix in PY else None
             rust_views = rust_scan_views(lines) if suffix == ".rs" else None
-            c_views = rust_scan_views(lines) if suffix in C_STYLE_SUFFIXES or suffix == ".dart" else None
+            c_views = (
+                js_scan_views(lines) if suffix in JS
+                else rust_scan_views(lines)
+                if suffix in C_STYLE_SUFFIXES or suffix == ".dart"
+                else None
+            )
             dialect = (
                 "lua" if suffix == ".lua" else
                 "sql" if suffix == ".sql" else
