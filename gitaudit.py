@@ -15,7 +15,7 @@ from urllib.error import URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
-from audit_filters import python_code_lines, rust_scan_views, shell_without_comments
+from audit_filters import hash_language_code, python_code_lines, rust_scan_views, shell_without_comments
 from audit_guidance import guidance_for
 from report_html import render_html
 from polyglot_rules import C_STYLE_SUFFIXES, HASH_COMMENT_SUFFIXES, SPECS
@@ -295,7 +295,11 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
                             )
                             if suffix == ".php":
                                 candidate = shell_without_comments(candidate)
-                        elif suffix in SHELL or suffix in HASH_COMMENT_SUFFIXES:
+                        elif suffix in HASH_COMMENT_SUFFIXES:
+                            candidate = hash_language_code(
+                                line, powershell=(suffix == ".ps1")
+                            )
+                        elif suffix in SHELL:
                             candidate = shell_without_comments(line)
                         elif is_comment_line(line, suffix):
                             continue
