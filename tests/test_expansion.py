@@ -10,6 +10,7 @@ import unittest
 from audit_guidance import GUIDANCE, guidance_for
 from expansion_filters import expansion_views
 from expansion_rules import DOCKERFILE_PATTERN, COMPOSE_PATTERN, EXPANSION_SPECS
+from metadata_rules import SPECS as METADATA_SPECS
 from gitaudit import RULES, SOURCE_SUFFIXES, analyze_archive
 from report_html import render_html
 
@@ -151,7 +152,7 @@ class ExpansionContractTests(unittest.TestCase):
         self.assertEqual(len(all_ids), len(set(all_ids)))
 
     def test_every_rule_has_specific_guidance(self):
-        self.assertEqual(set(GUIDANCE), {r.identifier for r in RULES})
+        self.assertEqual(set(GUIDANCE), {r.identifier for r in RULES} | {r.identifier for r in METADATA_SPECS})
 
     def test_new_rule_guidance_is_exact(self):
         for item in EXPANSION_SPECS:
