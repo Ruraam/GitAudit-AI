@@ -1,6 +1,6 @@
 # GitAudit AI — couverture et limites
 
-**État du prototype : v0.6 (branche de développement)**. GitAudit AI lit statiquement des fichiers texte sélectionnés. Les règles produisent des **indices heuristiques à vérifier**, jamais des vulnérabilités confirmées. Aucun code du dépôt cible n'est exécuté.
+**État du prototype : v0.7 de développement (non publié)**. GitAudit AI lit statiquement des fichiers texte sélectionnés. Les règles produisent des **indices heuristiques à vérifier**, jamais des vulnérabilités confirmées. Aucun code du dépôt cible n'est exécuté.
 
 ## Langages ciblés et familles de règles
 
@@ -38,6 +38,23 @@
 | `Cargo.toml` | Sections de dépendances courantes | version `*` |
 
 Les contrôles YAML et TOML ne sont **pas** des parseurs complets. Les tests ne récupèrent pas les paquets et n'interrogent **aucune base de vulnérabilités**. Les versions non fixées peuvent être des choix intentionnels, en particulier dans les bibliothèques.
+
+## Détection de secrets (v0.7, partielle)
+
+Des motifs sont aussi recherchés dans les fichiers sensibles de petite taille :
+`.env`, `.env.*`, `.pem`, `.key`, `id_rsa`, `id_ed25519`,
+`.npmrc`, `.pypirc`, `credentials` et `README.md`.
+Les signatures vérifient les en-têtes de clés privées, y compris les clés
+chiffrées et blocs PGP, ainsi que des formats reconnaissables de jetons
+AWS, GitHub, Slack et Stripe. Aucune valeur détectée n'est recopiée
+dans les rapports.
+
+**Limites :** ce n'est pas une détection exhaustive. Les jetons arbitraires,
+les secrets répartis sur plusieurs lignes, l'historique Git, les fichiers
+binaires et les gros fichiers peuvent rester hors périmètre. Un motif de jeton
+dans une fixture de test peut être un faux positif : sa priorité nécessite une
+validation humaine. Les dossiers de tests et d'exemples sont exclus des règles
+de code par défaut, **mais pas de la recherche de secrets**.
 
 ## Les types de tests réellement automatisés
 
