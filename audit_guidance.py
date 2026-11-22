@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from polyglot_rules import SPECS
+
 
 @dataclass(frozen=True)
 class Guidance:
@@ -118,6 +120,11 @@ GUIDANCE: dict[str, Guidance] = {
     ),
 }
 
+# Keep guidance coverage exact as more source languages are introduced.
+GUIDANCE.update({
+    spec.identifier: Guidance(spec.meaning, spec.action, spec.verify)
+    for spec in SPECS
+})
 
 def guidance_for(rule_id: str) -> Guidance:
     """Fallback for unknown future rules without repeating untrusted content."""
