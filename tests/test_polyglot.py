@@ -135,7 +135,7 @@ class LanguageCoverageContractTests(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
 
     def test_total_rule_count(self):
-        self.assertEqual(len(RULES), 62)
+        self.assertEqual(len(RULES), 66)
 
     def test_twenty_new_rules(self):
         self.assertEqual(len(SPECS), 20)
