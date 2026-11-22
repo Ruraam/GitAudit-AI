@@ -150,8 +150,9 @@ def analyze_archive(payload: bytes, repository: str) -> AuditResult:
                 result.partial = True
                 break
             # GitHub archives prefix every path with a root directory.
-            parts = PurePosixPath(member.name).parts
-            if len(parts) < 2 or ".." in parts:
+            path = PurePosixPath(member.name)
+            parts = path.parts
+            if path.is_absolute() or len(parts) < 2 or ".." in parts:
                 result.skipped_files += 1
                 continue
             rel = PurePosixPath(*parts[1:])
