@@ -115,6 +115,26 @@ GUIDANCE: dict[str, Guidance] = {
         "Si la clé est réelle, la considérer potentiellement exposée, la révoquer puis la remplacer et retirer la fuite à sa source.",
         "Faire une revue sans recopier la valeur de la clé dans les tickets ou les rapports.",
     ),
+    "GEN003": Guidance(
+        "Un identifiant ressemblant à une clé d'accès AWS a été trouvé.",
+        "Vérifier s'il est réel, désactiver les identifiants exposés et auditer les journaux associés.",
+        "Confirmer la rotation sans transmettre l'identifiant dans un ticket.",
+    ),
+    "GEN004": Guidance(
+        "Un motif ressemblant à un jeton GitHub a été détecté.",
+        "Vérifier les autorisations et révoquer le jeton s'il est actif.",
+        "Confirmer la rotation et la suppression du secret des sources exposées.",
+    ),
+    "GEN005": Guidance(
+        "Un motif ressemblant à un jeton Slack a été détecté.",
+        "Révoquer les jetons actifs exposés et vérifier leurs autorisations.",
+        "Confirmer la rotation et l'absence de copie dans les rapports.",
+    ),
+    "GEN006": Guidance(
+        "Un motif ressemblant à une clé Stripe secrète de production a été détecté.",
+        "Vérifier et remplacer immédiatement toute clé active exposée.",
+        "Contrôler les accès et l'absence de secret dans les traces ou rapports.",
+    ),
     "GEN002": Guidance(
         "Un TODO ou FIXME signale une tâche ou une dette de maintenance.",
         "Vérifier que la note est encore pertinente et ouvrir une tâche seulement si elle reste nécessaire.",
