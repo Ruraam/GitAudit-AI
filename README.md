@@ -19,7 +19,7 @@ GitAudit AI est un **prototype expérimental d'analyse statique de dépôts GitH
 - Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
 - Chaque règle propose : *pourquoi examiner*, *action recommandée* et *validation*. Les conseils figurent dans le Markdown et l'HTML.
 - Les règles ciblées, y compris les anciennes règles Python et JavaScript/TypeScript, masquent les commentaires et certaines chaînes pour réduire les faux positifs. **Ces filtres heuristiques ne remplacent pas un parseur de chaque langage.**
-- Recherche des motifs de secrets **également dans les fichiers sensibles** (`.env*`, `.pem`, `.key`, `id_rsa`, `.npmrc`, `.pypirc`, `README.md`) sous les mêmes limites de taille. Les chemins `tests/`, `fixtures/`, `docs/`, `examples/` ne déclenchent pas les règles de code par défaut, mais restent examinés pour les secrets.
+- Recherche des motifs de secrets **également dans les fichiers sensibles** (`.env*`, `.pem`, `.key`, `id_rsa`, `.npmrc`, `.pypirc`, `README.md`) sous les mêmes limites de taille. Les chemins `tests/`, `fixtures/`, `docs/`, `examples/` ne déclenchent actuellement pas les règles de code (exclusion codée en dur, sans option de réactivation pour le moment), mais restent examinés pour les secrets.
 - Limite la taille des archives, des fichiers et des rapports, et signale si une analyse est partielle.
 
 ## Lancer un audit en local
@@ -70,7 +70,7 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 - Aucun accès en écriture aux dépôts analysés.
 - Pas d'identifiants bancaires, d'API de modèle payant ni de paiements.
 - Les Actions sont soumises aux quotas et aux règles de facturation GitHub : ne pas supposer un usage illimité.
-- V0.4 étend les règles heuristiques à d'autres langages, mais **absence de détection ≠ absence de faille**. Les constructions Rust `unsafe {}` sont classées comme **points de revue faibles**, pas comme des vulnérabilités prouvées.
+- La v0.7-dev applique des règles heuristiques, mais **absence de détection ≠ absence de faille**. Les constructions Rust `unsafe {}` sont classées comme **points de revue faibles**, pas comme des vulnérabilités prouvées.
 - Les nouvelles règles de langage utilisent des filtres légers pour supprimer les commentaires et les chaînes pertinentes dans leurs recherches. Ces filtres ne couvrent **pas toutes les syntaxes ni tous les langages** : des faux positifs et négatifs restent possibles, notamment dans les macros Rust, les chaînes shell et les f-strings Python.
 - Les règles anciennes (ex. détection d'en-tête de clé privée) continuent d'examiner le texte brut pour éviter de masquer les secrets dans des littéraux.
 - La catégorie `review` est utilisée pour les blocs Rust `unsafe` et les transmutations, car leur présence seule ne démontre pas un problème de sécurité.
