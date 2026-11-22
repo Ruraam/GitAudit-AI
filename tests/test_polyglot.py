@@ -134,7 +134,7 @@ class LanguageCoverageContractTests(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
 
     def test_total_rule_count(self):
-        self.assertEqual(len(RULES), 40)
+        self.assertEqual(len(RULES), 62)
 
     def test_twenty_new_rules(self):
         self.assertEqual(len(SPECS), 20)
@@ -197,7 +197,7 @@ class LanguageCoverageContractTests(unittest.TestCase):
         self.assertIn("TLS", render_html(result))
 
     def test_unsupported_extension_does_not_claim_coverage(self):
-        result = audit("script.lua", "eval(user_input)\n")
+        result = audit("script.elm", "eval(user_input)\n")
         self.assertEqual(result.scanned_files, 0)
         self.assertEqual(result.findings, [])
 
