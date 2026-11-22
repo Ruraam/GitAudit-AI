@@ -37,6 +37,12 @@ Après fusion de la branche de développement :
 3. Entrer le nom du dépôt public, par exemple `Ruraam/BubbleWM` ; renseigner facultativement la branche (`feature/wlr-layer-shell`), le tag ou le SHA.
 4. Télécharger l'artefact **gitaudit-report** de l'exécution, décompresser le ZIP, puis ouvrir **`report.html`** dans le navigateur. Le ZIP contient aussi `report.md` et `report.json`.
 
+## Vitrine statique (GitHub Pages)
+
+Le fichier `docs/index.html` fournit une **page de présentation**, sans JavaScript ni backend : elle explique le projet, les résultats d'un test daté, les limites de l'analyse et le moyen de consulter des rapports. **Cette page n'est pas un formulaire d'audit public** et ne reçoit ni code ni paiement.
+
+Pour la publier **après validation et fusion des PR empilées** : dans le dépôt GitHub, ouvrir **Settings → Pages → Build and deployment → Deploy from a branch**, sélectionner **`main`** puis **`/docs`** et enregistrer. Le lien public apparaîtra dans les paramètres Pages seulement une fois le déploiement réussi. La disponibilité et l'éventuelle facturation restent soumises aux conditions du compte GitHub ; ne pas activer d'option payante.
+
 Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à chaque changement. Le workflow **Live smoke test - BubbleWM** exécute un audit réel et limité sur `main` et `feature/wlr-layer-shell` lors des changements de la branche de tests `test/security-regression-suite`. Les autres audits restent **manuels**.
 
 ## Sécurité et limites de coûts
