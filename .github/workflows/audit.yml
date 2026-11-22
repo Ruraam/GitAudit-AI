@@ -8,6 +8,11 @@ on:
         required: true
         default: "Ruraam/BubbleWM"
         type: string
+      ref:
+        description: "Optional branch, tag or SHA (leave blank for default branch)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -26,9 +31,15 @@ jobs:
       - name: Run read-only audit
         env:
           TARGET_REPOSITORY: ${{ inputs.repository }}
+          TARGET_REF: ${{ inputs.ref }}
         run: |
-          python3 gitaudit.py "$TARGET_REPOSITORY" \
-            --report report.md --json report.json
+          if [ -n "$TARGET_REF" ]; then
+            python3 gitaudit.py "$TARGET_REPOSITORY" --ref "$TARGET_REF" \
+              --report report.md --json report.json
+          else
+            python3 gitaudit.py "$TARGET_REPOSITORY" \
+              --report report.md --json report.json
+          fi
 
       - name: Upload report
         uses: actions/upload-artifact@v4
