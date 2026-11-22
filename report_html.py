@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 from audit_guidance import guidance_for
+from version import __version__
 
 if TYPE_CHECKING:
     from gitaudit import AuditResult, Finding
@@ -128,10 +129,10 @@ def render_html(result: "AuditResult") -> str:
         '<meta name="viewport" content="width=device-width,initial-scale=1">',
         '<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; '
         'style-src &#39;unsafe-inline&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">',
-        f'<title>GitAudit AI — {esc(result.repository)}</title>',
+        f'<title>GitAudit AI v{__version__} — {esc(result.repository)}</title>',
         f'<style>{CSS}</style></head><body>',
         '<a class="skip" href="#main">Aller au rapport</a>',
-        '<header><div class="container"><div class="brand">GitAudit AI / Rapport local</div>',
+        f'<header><div class="container"><div class="brand">GitAudit AI v{__version__} / Rapport local</div>',
         f'<h1>{esc(result.repository)}</h1>',
         f'<p class="muted">Référence : <code>{esc(result.reference or "branche par défaut")}</code> '
         '· Analyse statique, sans exécution du dépôt.</p></div></header>',
