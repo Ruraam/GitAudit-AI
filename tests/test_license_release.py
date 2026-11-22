@@ -61,7 +61,8 @@ class AgplComplianceTests(unittest.TestCase):
 
     def test_site_credits_explicit_license(self):
         self.assertIn("GNU AGPL-3.0-only", self.website)
-        self.assertIn("github.com/Ruraam/GitAudit-AI/blob/main/LICENSE", self.website)
+        self.assertIn("github.com/Ruraam/GitAudit-AI/blob/fc39d81772837b03d580117ab583fbcab54986d3/LICENSE", self.website)
+        self.assertNotIn("blob/main/LICENSE", self.website)
 
     def test_no_stale_unlicensed_claim_in_readme(self):
         self.assertNotIn("aucune licence de réutilisation", self.readme.lower())
