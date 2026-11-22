@@ -16,7 +16,8 @@ GitAudit AI est un **prototype expérimental d'analyse statique de dépôts GitH
 - Génère des rapports **Markdown**, **JSON** et **HTML autonome** lisible dans un navigateur, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
 - Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
 - Chaque règle propose : *pourquoi examiner*, *action recommandée* et *validation*. Les conseils figurent dans le Markdown et l'HTML.
-- Les règles ciblées masquent certains commentaires et chaînes en Python, Rust, langages de style C, Ruby et PowerShell pour réduire les faux positifs. **Ces filtres heuristiques ne remplacent pas un parseur de chaque langage.**
+- Les règles ciblées, y compris les anciennes règles Python et JavaScript/TypeScript, masquent les commentaires et certaines chaînes pour réduire les faux positifs. **Ces filtres heuristiques ne remplacent pas un parseur de chaque langage.**
+- Recherche des motifs de secrets **également dans les fichiers sensibles** (`.env*`, `.pem`, `.key`, `id_rsa`, `.npmrc`, `.pypirc`, `README.md`) sous les mêmes limites de taille. Les chemins `tests/`, `fixtures/`, `docs/`, `examples/` ne déclenchent pas les règles de code par défaut, mais restent examinés pour les secrets.
 - Limite la taille des archives, des fichiers et des rapports, et signale si une analyse est partielle.
 
 ## Lancer un audit en local
@@ -48,6 +49,12 @@ Pour la publier **après validation et fusion des PR empilées** : dans le dép�
 
 Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à chaque changement. Le workflow **Live smoke test - BubbleWM** exécute des audits réels et limités sur ses branches `main` et `feature/wlr-layer-shell` dans certaines branches de développement autorisées. Les audits libres de tout dépôt restent **manuels**.
 
+## Processus et statut
+
+- La version **0.7.0.dev0** correspond à une branche de développement **non publiée**. L'option `--version` est disponible ; aucune release GitHub ni GitHub Pages n'a encore été annoncée.
+- La vitrine conservée dans `docs/index.html` est **une proposition non publiée**. Un [résumé historique BubbleWM](docs/examples/bubblewm-snapshot.json) et son [journal GitHub Actions](https://github.com/Ruraam/GitAudit-AI/actions/runs/44971101170) indiquent la provenance de ses chiffres datés.
+- Voir [SECURITY.md](SECURITY.md) pour les signalements sensibles, [CONTRIBUTING.md](CONTRIBUTING.md) pour les contributions, et [CHANGELOG.md](CHANGELOG.md) pour les changements en développement.
+
 ## Sécurité et limites de coûts
 
 - Aucun script ni aucune dépendance du dépôt analysé n'est exécuté.
@@ -71,7 +78,8 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 4. **V0.4** : 40 règles et couverture de 13 familles de langages, tests positifs/négatifs.
 5. **V0.5 (en cours)** : 22 nouvelles règles pour Dart/Flutter, Lua, SQL, Terraform, Dockerfile et Docker Compose ; couverture par nom et extension, tests de non-régression. Voir [Matrice de couverture](docs/COVERAGE.md).
 6. **V0.6 (en cours)** : 9 règles supplémentaires pour workflows GitHub Actions et manifestes `package.json`, `requirements*.txt`, `Cargo.toml`, avec tests positifs et négatifs.
-7. **À suivre** : parseurs/AST dédiés, dépendances vérifiées via bases CVE/OSV, SBOM, configurations CI complètes et supply chain ; compilation, lint et tests d'intégration uniquement avec consentement explicite et isolation adaptés.
-8. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
+7. **V0.7 (en cours)** : réduction des faux positifs, détection de secrets sur fichiers sensibles, CI épinglée et version centralisée ; correction de la présentation et exemple daté.
+8. **À suivre** : parseurs/AST dédiés, dépendances vérifiées via bases CVE/OSV, SBOM, configurations CI complètes et supply chain ; compilation, lint et tests d'intégration uniquement avec consentement explicite et isolation adaptés.
+9. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
 
 Ce projet est indépendant de BubbleOS et n'y apporte aucune modification.
