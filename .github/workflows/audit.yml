@@ -35,10 +35,10 @@ jobs:
         run: |
           if [ -n "$TARGET_REF" ]; then
             python3 gitaudit.py "$TARGET_REPOSITORY" --ref "$TARGET_REF" \
-              --report report.md --json report.json
+              --report report.md --json report.json --html report.html
           else
             python3 gitaudit.py "$TARGET_REPOSITORY" \
-              --report report.md --json report.json
+              --report report.md --json report.json --html report.html
           fi
 
       - name: Upload report
@@ -48,5 +48,6 @@ jobs:
           path: |
             report.md
             report.json
+            report.html
           retention-days: 7
           if-no-files-found: error
