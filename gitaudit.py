@@ -482,6 +482,7 @@ def render_markdown(result: AuditResult) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Audit statique GitHub à budget zéro.")
+    parser.add_argument("--version", action="version", version=f"GitAudit AI {__version__}")
     parser.add_argument("repository", help="owner/repo ou https://github.com/owner/repo")
     parser.add_argument("--report", help="Chemin de sortie Markdown")
     parser.add_argument("--json", help="Chemin de sortie JSON")
