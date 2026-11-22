@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from polyglot_rules import SPECS
+from expansion_rules import EXPANSION_SPECS
 
 
 @dataclass(frozen=True)
@@ -123,7 +124,7 @@ GUIDANCE: dict[str, Guidance] = {
 # Keep guidance coverage exact as more source languages are introduced.
 GUIDANCE.update({
     spec.identifier: Guidance(spec.meaning, spec.action, spec.verify)
-    for spec in SPECS
+    for spec in (*SPECS, *EXPANSION_SPECS)
 })
 
 def guidance_for(rule_id: str) -> Guidance:

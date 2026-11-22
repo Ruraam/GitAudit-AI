@@ -19,6 +19,8 @@ from audit_filters import hash_language_code, python_code_lines, rust_scan_views
 from audit_guidance import guidance_for
 from report_html import render_html
 from polyglot_rules import C_STYLE_SUFFIXES, HASH_COMMENT_SUFFIXES, SPECS
+from expansion_filters import expansion_views
+from expansion_rules import EXPANSION_SPECS
 
 MAX_DOWNLOAD = 20 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 5000
@@ -30,9 +32,16 @@ MAX_FINDINGS = 100
 SOURCE_SUFFIXES = frozenset({
     ".py", ".sh", ".bash", ".rs", ".js", ".jsx", ".ts", ".tsx",
     ".go", ".c", ".h", ".cpp", ".hpp", ".java", ".rb", ".php",
-    ".kt", ".swift", ".cs", ".ps1", ".yaml", ".yml", ".toml", ".json", ".html",
+    ".kt", ".swift", ".cs", ".ps1", ".dart", ".lua", ".sql", ".tf", ".tfvars",
+    ".hcl", ".dockerfile", ".yaml", ".yml", ".toml", ".json", ".html",
 })
-SOURCE_NAMES = frozenset({"Dockerfile", "Makefile"})
+SOURCE_NAMES = frozenset({"Dockerfile", "Containerfile", "Makefile"})
+
+
+def is_dockerfile_name(name: str) -> bool:
+    """Dockerfile and Containerfile plus explicit filename variants."""
+    return bool(re.fullmatch(r"(?:Dockerfile|Containerfile)(?:\.[A-Za-z0-9_.-]+)?", name))
+
 IGNORED_PARTS = frozenset({
     ".git", ".venv", "venv", "node_modules", "vendor", "target",
     "dist", "build", "__pycache__", ".next", ".tox", "coverage",
@@ -52,6 +61,8 @@ class Rule:
     advice: str
     skip_comments: bool = False
     category: str = "risk"
+    path_pattern: re.Pattern[str] | None = None
+    preserve_strings: bool = False
 
 
 @dataclass(frozen=True)
@@ -154,6 +165,14 @@ RULES = (
         spec.identifier, spec.severity, spec.title, re.compile(spec.pattern),
         frozenset(spec.suffixes), spec.advice, True, spec.category,
     ) for spec in SPECS
+) + tuple(
+    Rule(
+        spec.identifier, spec.severity, spec.title, re.compile(spec.pattern),
+        frozenset(spec.suffixes) if spec.suffixes is not None else None,
+        spec.advice, True, spec.category,
+        re.compile(spec.path_pattern) if spec.path_pattern else None,
+        spec.preserve_strings,
+    ) for spec in EXPANSION_SPECS
 )
 
 
@@ -249,7 +268,8 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             rel = PurePosixPath(*parts[1:])
             if (
                 any(part in IGNORED_PARTS for part in rel.parts)
-                or (rel.suffix.lower() not in SOURCE_SUFFIXES and rel.name not in SOURCE_NAMES)
+                or (rel.suffix.lower() not in SOURCE_SUFFIXES and rel.name not in SOURCE_NAMES
+                    and not is_dockerfile_name(rel.name))
                 or member.size > MAX_FILE_BYTES
             ):
                 result.skipped_files += 1
@@ -272,10 +292,21 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             suffix = rel.suffix.lower()
             python_code = python_code_lines(lines) if suffix in PY else None
             rust_views = rust_scan_views(lines) if suffix == ".rs" else None
-            c_views = rust_scan_views(lines) if suffix in C_STYLE_SUFFIXES else None
+            c_views = rust_scan_views(lines) if suffix in C_STYLE_SUFFIXES or suffix == ".dart" else None
+            dialect = (
+                "lua" if suffix == ".lua" else
+                "sql" if suffix == ".sql" else
+                "hcl" if suffix in {".tf", ".tfvars", ".hcl"} else
+                "compose" if suffix in {".yaml", ".yml"} else
+                "docker" if is_dockerfile_name(rel.name) or suffix == ".dockerfile" else
+                None
+            )
+            expansion_code = expansion_views(lines, dialect) if dialect else None
             for line_number, line in enumerate(lines, 1):
                 for rule in RULES:
                     if rule.suffixes is not None and suffix not in rule.suffixes:
+                        continue
+                    if rule.path_pattern is not None and not rule.path_pattern.search(str(rel)):
                         continue
                     candidate = line
                     if rule.skip_comments:
@@ -295,6 +326,9 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
                             )
                             if suffix == ".php":
                                 candidate = shell_without_comments(candidate)
+                        elif expansion_code is not None:
+                            no_comments, code_only = expansion_code[line_number - 1]
+                            candidate = no_comments if rule.preserve_strings else code_only
                         elif suffix in HASH_COMMENT_SUFFIXES:
                             candidate = hash_language_code(
                                 line, powershell=(suffix == ".ps1")
