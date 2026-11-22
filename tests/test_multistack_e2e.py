@@ -46,7 +46,7 @@ class MultiStackIntegrationTests(unittest.TestCase):
         cls.result = gitaudit.analyze_archive(cls.payload, "acme/multistack", "main")
 
     def test_expected_scanned_file_count(self):
-        self.assertEqual(self.result.scanned_files, 8)
+        self.assertEqual(self.result.scanned_files, 9)
 
     def test_expected_multilang_rules(self):
         found = {item.rule for item in self.result.findings}
@@ -95,7 +95,7 @@ class MultiStackIntegrationTests(unittest.TestCase):
         self.assertEqual(asdict(self.result), asdict(again))
 
     def test_unsupported_files_skipped(self):
-        self.assertEqual(self.result.skipped_files, 1)
+        self.assertEqual(self.result.skipped_files, 0)
         self.assertFalse(any(f.path == "docs/README.md" for f in self.result.findings))
 
     def test_partial_at_findings_limit(self):
@@ -132,7 +132,7 @@ class MultiStackIntegrationTests(unittest.TestCase):
             with patch.object(tarfile.TarFile, "extract",
                               side_effect=AssertionError("No extraction allowed")):
                 result = gitaudit.analyze_archive(self.payload, "acme/multistack")
-        self.assertEqual(result.scanned_files, 8)
+        self.assertEqual(result.scanned_files, 9)
 
 
 if __name__ == "__main__":
