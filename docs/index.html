@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GitAudit AI : prototype libre d'analyse statique de dépôts GitHub publics, avec rapports HTML lisibles et recommandations à vérifier.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="dark">
+  <title>GitAudit AI — Audit statique et rapports lisibles</title>
+  <style>
+    :root {color-scheme:dark;--bg:#090d17;--panel:#141c2b;--line:#29374c;--text:#eaf2ff;--muted:#aabbce;--mint:#59ebc5;--blue:#86bffa;--amber:#ffdb8f;}
+    * {box-sizing:border-box}
+    body {margin:0;background:radial-gradient(ellipse at 75% -12%,#1d3650 0%,#090d17 50%) fixed;color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+    .wrap {width:min(1040px,calc(100% - 2rem));margin:0 auto}
+    a {color:var(--blue)}
+    a:focus-visible {outline:3px solid var(--mint);outline-offset:3px}
+    .skip {position:absolute;top:-100px;background:var(--panel);padding:.7rem}
+    .skip:focus {top:.4rem}
+    .topbar {border-bottom:1px solid var(--line);padding:1rem 0}
+    .nav {display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+    .logo {text-decoration:none;color:var(--text);font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+    .logo span {color:var(--mint)}
+    .navlinks {display:flex;gap:1rem;flex-wrap:wrap;font-size:.9rem}
+    .hero {padding:clamp(3rem,7vw,6.5rem) 0 3rem}
+    .eyebrow {text-transform:uppercase;letter-spacing:.15em;color:var(--mint);font-weight:750;font-size:.8rem}
+    h1 {max-width:840px;font-size:clamp(2.1rem,6vw,4.2rem);line-height:1.1;letter-spacing:-.035em;margin:.8rem 0 1.1rem}
+    h1 span {color:var(--mint)}
+    h2 {font-size:clamp(1.45rem,3vw,2rem);margin:0 0 1rem}
+    h3 {margin:.2rem 0 .4rem;font-size:1.08rem}
+    .lead {max-width:680px;font-size:1.08rem;color:var(--muted)}
+    .actions {display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}
+    .link-btn {display:inline-block;text-decoration:none;border:1px solid #52738e;border-radius:10px;padding:.75rem 1rem;font-weight:700;color:var(--text)}
+    .link-btn.primary {background:var(--mint);color:#07151a;border-color:var(--mint)}
+    .link-btn:hover {filter:brightness(1.12)}
+    .notice {padding:1rem 1.2rem;background:#252318;border-left:4px solid var(--amber);border-radius:8px;color:#ffe5ae;margin:1rem 0}
+    section {padding:2rem 0}
+    .grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+    .card {border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:1.15rem}
+    .card p,.muted {color:var(--muted)}
+    .number {display:inline-grid;place-items:center;width:2.1rem;height:2.1rem;border:1px solid var(--mint);border-radius:8px;color:var(--mint);font-weight:800;margin-bottom:.7rem}
+    .stat {font-size:2rem;font-weight:800;line-height:1.2}
+    .section-head {display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1rem}
+    .capsule {display:inline-block;color:var(--mint);border:1px solid #376857;border-radius:999px;padding:.1rem .55rem;font-size:.85rem;font-weight:700}
+    code {font: .91em/1.4 ui-monospace,SFMono-Regular,monospace;overflow-wrap:anywhere}
+    .pre {overflow-x:auto;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:10px;background:#0e1624;white-space:pre-wrap;overflow-wrap:anywhere}
+    footer {padding:2rem 0 3rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<div class="topbar"><div class="wrap nav">
+  <a class="logo" href="#accueil"><span>G</span>itAudit <span>AI</span></a>
+  <nav class="navlinks" aria-label="Navigation principale">
+    <a href="#fonctionnement">Fonctionnement</a>
+    <a href="#exemple">Exemple réel</a>
+    <a href="https://github.com/Ruraam/GitAudit-AI">Code source</a>
+  </nav>
+</div></div>
+<main id="contenu">
+  <section class="hero wrap" id="accueil">
+    <p class="eyebrow">Prototype open source · Audits en lecture seule</p>
+    <h1>Comprendre les risques du code. <span>Sans fausses promesses.</span></h1>
+    <p class="lead">GitAudit AI examine les fichiers de dépôts GitHub publics, classe les indices relevés et prépare des rapports HTML, Markdown et JSON avec des pistes de vérification. Il n’exécute jamais le code du dépôt analysé.</p>
+    <div class="actions">
+      <a class="link-btn primary" href="https://github.com/Ruraam/GitAudit-AI">Explorer le dépôt GitHub</a>
+      <a class="link-btn" href="https://github.com/Ruraam/GitAudit-AI/actions">Voir les audits et rapports</a>
+    </div>
+    <p class="notice"><strong>Version expérimentale :</strong> cet outil ne certifie pas la sécurité d’un dépôt et peut manquer des problèmes ou signaler de faux positifs. L’analyse publique à la demande par n’importe quel visiteur n’est pas encore disponible.</p>
+  </section>
+  <section class="wrap" id="fonctionnement">
+    <h2>Comment ça fonctionne</h2>
+    <div class="grid">
+      <article class="card"><span class="number">1</span><h3>Choisir un dépôt</h3><p>L’exploitant indique un dépôt GitHub public et, si nécessaire, une branche, un tag ou un commit.</p></article>
+      <article class="card"><span class="number">2</span><h3>Examiner sans exécuter</h3><p>Le programme lit un instantané limité du code et cherche 20 motifs à examiner en Rust, Python, Bash et JavaScript.</p></article>
+      <article class="card"><span class="number">3</span><h3>Lire les recommandations</h3><p>Un rapport HTML autonome explique la nature des indices, une action possible et comment vérifier le résultat.</p></article>
+    </div>
+  </section>
+  <section class="wrap" id="exemple">
+    <div class="section-head"><h2>Exemple : BubbleWM</h2><span class="capsule">Audits vérifiés</span></div>
+    <p class="muted">Instantané des vérifications du 22 novembre 2026. Ce ne sont pas des indicateurs actualisés automatiquement.</p>
+    <div class="grid">
+      <article class="card"><h3>Branche principale</h3><div class="stat">8</div><p>Points de revue sur 13 fichiers examinés.</p></article>
+      <article class="card"><h3>Branche Wayland active</h3><div class="stat">40</div><p>Points de revue sur 30 fichiers examinés.</p></article>
+      <article class="card"><h3>Ce que ces chiffres veulent dire</h3><p>Les indices correspondent à des blocs <code>unsafe</code> Rust. Leur présence ne prouve pas qu’il existe des vulnérabilités.</p></article>
+    </div>
+    <p><a href="https://github.com/Ruraam/GitAudit-AI/actions">Consulter les exécutions GitHub Actions et les artefacts disponibles</a></p>
+  </section>
+  <section class="wrap" id="utilisation">
+    <h2>Obtenir un rapport pour un dépôt</h2>
+    <p class="muted">À ce stade, l’exécution manuelle via GitHub Actions est réservée aux personnes autorisées sur le dépôt GitAudit AI. Les visiteurs peuvent consulter le code et les exemples publics, mais pas soumettre librement une analyse depuis cette page.</p>
+    <div class="pre"><code>python3 gitaudit.py Ruraam/BubbleWM --ref feature/wlr-layer-shell --html report.html --report report.md --json report.json</code></div>
+    <p>Après analyse, <code>report.html</code> s’ouvre dans un navigateur, même hors ligne. Les rapports ne contiennent pas les extraits de code déclencheurs.</p>
+  </section>
+</main>
+<footer><div class="wrap">GitAudit AI · Prototype indépendant de BubbleOS · Pas de garantie de détection exhaustive · Aucun service commercial ou paiement activé. <a href="https://github.com/Ruraam/GitAudit-AI">Source et documentation</a>.</div></footer>
+</body>
+</html>
