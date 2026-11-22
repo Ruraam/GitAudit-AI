@@ -11,6 +11,8 @@ GitAudit AI est un **prototype d'analyse statique de dépôts GitHub publics**, 
 - Inspecte des fichiers source **sans exécuter le code cible** et **sans extraire l'archive sur disque**.
 - Repère **20 motifs suspects** en Rust, Bash, Python et JavaScript : appels dangereux, TLS désactivé, transmutation/unsafe Rust, `eval` shell, `mktemp -u`, permissions excessives, clés privées et marqueurs TODO/FIXME.
 - Génère des rapports **Markdown** et **JSON**, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
+- Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
+- Pour les règles ciblées, masque les commentaires et les littéraux Python, ainsi que les commentaires et certaines chaînes Rust, afin de réduire les faux positifs sans introduire de dépendance. Les filtres ne remplacent pas un véritable parseur.
 - Limite la taille des archives, des fichiers et des rapports, et signale si une analyse est partielle.
 
 ## Lancer un audit en local
@@ -43,7 +45,9 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 - Pas d'identifiants bancaires, d'API de modèle payant ni de paiements.
 - Les Actions sont soumises aux quotas et aux règles de facturation GitHub : ne pas supposer un usage illimité.
 - V0.2 ajoute des règles heuristiques par langage, mais **absence de détection ≠ absence de faille**. Les constructions Rust `unsafe {}` sont classées comme **points de revue faibles**, pas comme des vulnérabilités prouvées.
-- Les commentaires autonomes sont ignorés pour les nouvelles règles de langage ; les chaînes de caractères et les syntaxes réparties sur plusieurs lignes peuvent encore créer des faux positifs / négatifs.
+- Les nouvelles règles de langage utilisent des filtres légers pour supprimer les commentaires et les chaînes pertinentes dans leurs recherches. Ces filtres ne couvrent **pas toutes les syntaxes ni tous les langages** : des faux positifs et négatifs restent possibles, notamment dans les macros Rust, les chaînes shell et les f-strings Python.
+- Les règles anciennes (ex. détection d'en-tête de clé privée) continuent d'examiner le texte brut pour éviter de masquer les secrets dans des littéraux.
+- La catégorie `review` est utilisée pour les blocs Rust `unsafe` et les transmutations, car leur présence seule ne démontre pas un problème de sécurité.
 - Les archives dépassant 20 Mio sont refusées ; les analyses trop volumineuses sont signalées comme partielles.
 - Une référence Git demandée est strictement validée avant téléchargement ; seules des références de caractères simples sont acceptées.
 - L'analyseur vérifie des motifs dans les fichiers, pas les problèmes de logique métier ni l'ensemble des dépendances.
@@ -51,7 +55,7 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 ## Feuille de route
 
 1. **V0.1** : prototype statique et rapports, CI et exécution manuelle.
-2. **V0.2 (en cours)** : 20 règles ciblées en Rust/Bash/Python/JS ; tests avec cas positifs et négatifs, audits réels de branches actives, amélioration progressive de la précision.
+2. **V0.2 (en cours)** : 20 règles ciblées en Rust/Bash/Python/JS ; tests positifs et négatifs, audits de branches actives, **catégorisation des constats** et filtrage de sources pour améliorer la précision.
 3. **V0.3** : interface web de démonstration, sans service commercial activé.
 4. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
 
