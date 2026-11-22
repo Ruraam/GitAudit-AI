@@ -16,6 +16,8 @@ from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 from audit_filters import python_code_lines, rust_scan_views, shell_without_comments
+from audit_guidance import guidance_for
+from report_html import render_html
 
 MAX_DOWNLOAD = 20 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 5000
@@ -340,6 +342,25 @@ def render_markdown(result: AuditResult) -> str:
         rows.append("Aucun indice trouvé par les règles limitées de cette version.")
     rows += [
         "",
+        "## Recommandations par règle",
+        "",
+    ]
+    if result.findings:
+        for rule_id in sorted({finding.rule for finding in result.findings}):
+            guidance = guidance_for(rule_id)
+            rows.extend([
+                f"### {rule_id}",
+                "",
+                f"**À vérifier :** {guidance.meaning}",
+                "",
+                f"**Action recommandée :** {guidance.action}",
+                "",
+                f"**Validation :** {guidance.verify}",
+                "",
+            ])
+    else:
+        rows += ["Aucune recommandation particulière : poursuivre les autres vérifications.", ""]
+    rows += [
         "## Limites importantes",
         "",
         "- Les catégories « risk », « review » et « maintenance » sont des aides au tri.",
@@ -359,6 +380,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("repository", help="owner/repo ou https://github.com/owner/repo")
     parser.add_argument("--report", help="Chemin de sortie Markdown")
     parser.add_argument("--json", help="Chemin de sortie JSON")
+    parser.add_argument("--html", help="Chemin de sortie du rapport HTML autonome")
     parser.add_argument("--ref", help="Branche, tag ou SHA Git (défaut : branche principale)")
     args = parser.parse_args(argv)
     try:
@@ -378,6 +400,9 @@ def main(argv: list[str] | None = None) -> int:
                 json.dumps(asdict(result), ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
+        if args.html:
+            from pathlib import Path
+            Path(args.html).write_text(render_html(result), encoding="utf-8")
         print(
             f"Audit terminé : {result.scanned_files} fichiers, "
             f"{len(result.findings)} indices. Partiel : {result.partial}",
