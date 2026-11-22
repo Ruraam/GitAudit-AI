@@ -6,6 +6,11 @@ automatiquement.
 
 ## [0.7.0.dev0] — En développement, non publié
 
+- Licence **GNU AGPL-3.0-only** incluse intégralement dans la branche de
+  consolidation, avec mentions dans le README, les contributions et la vitrine.
+- Préparation d'une PR de consolidation unique vers `main` regroupant
+  les changements des PR #2 à #10, sans fusion automatique.
+
 - Version centralisée dans `version.py`, option CLI `--version`, titre de rapport
   et User-Agent cohérents.
 - Réduction des faux positifs des anciennes règles Python et JavaScript/TS
@@ -32,6 +37,8 @@ automatiquement.
 
 ## Restrictions de publication
 
-Choisir et publier une licence explicite, effectuer la revue des PR #2 à #10,
-consolider `main` et réexécuter la CI avant toute release ou
-communication publique comme « logiciel open source ».
+La licence AGPL-3.0-only est choisie et incluse sur la branche de revue,
+mais **n'est pas encore intégrée à `main`**. Vérifier les droits sur les
+contributions/éléments tiers, effectuer la revue de la consolidation, vérifier
+la CI finale puis demander une autorisation explicite avant toute fusion,
+publication d'un tag, release ou activation de GitHub Pages.
