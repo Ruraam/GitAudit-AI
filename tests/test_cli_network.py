@@ -133,7 +133,7 @@ class CliAndReportTests(unittest.TestCase):
             with redirect_stdout(stdout), redirect_stderr(io.StringIO()):
                 status = gitaudit.main(["Ruraam/BubbleWM"])
         self.assertEqual(status, 0)
-        self.assertIn("# Rapport GitAudit AI v0.1", stdout.getvalue())
+        self.assertIn("# Rapport GitAudit AI v0.7.0.dev0", stdout.getvalue())
         self.assertIn("PY001", stdout.getvalue())
 
     def test_writes_markdown_and_json(self):
