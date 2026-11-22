@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - test/security-regression-suite
+      - feat/rules-rust-bash-python-v0.2
   workflow_dispatch:
 
 permissions:
