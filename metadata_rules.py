@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 """Bounded, read-only metadata checks for GitHub workflows and dependency manifests.
 
 No workflow steps or dependency install commands are executed. This is NOT
