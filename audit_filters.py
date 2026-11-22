@@ -57,7 +57,7 @@ def rust_scan_views(lines: list[str]) -> list[tuple[str, str]]:
     the heuristic.
     """
     output: list[tuple[str, str]] = []
-    block_comment = False
+    block_depth = 0
     string_open = False
     string_escape = False
     raw_closer: str | None = None
@@ -68,12 +68,18 @@ def rust_scan_views(lines: list[str]) -> list[tuple[str, str]]:
         index = 0
 
         while index < len(line):
-            if block_comment:
-                end = line.find("*/", index)
-                finish = len(line) if end == -1 else end + 2
+            if block_depth:
+                # Rust block comments can nest, unlike C-style comments.
+                if line.startswith("/*", index):
+                    block_depth += 1
+                    finish = index + 2
+                elif line.startswith("*/", index):
+                    block_depth -= 1
+                    finish = index + 2
+                else:
+                    finish = index + 1
                 _blank(code, index, finish)
                 _blank(comments_removed, index, finish)
-                block_comment = end == -1
                 index = finish
                 continue
 
@@ -109,7 +115,7 @@ def rust_scan_views(lines: list[str]) -> list[tuple[str, str]]:
             if line.startswith("/*", index):
                 _blank(code, index, index + 2)
                 _blank(comments_removed, index, index + 2)
-                block_comment = True
+                block_depth = 1
                 index += 2
                 continue
 
