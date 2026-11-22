@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
 """GitAudit AI: bounded, read-only, heuristic GitHub source audit."""
 
 from __future__ import annotations
