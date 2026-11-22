@@ -21,6 +21,7 @@ from report_html import render_html
 from polyglot_rules import C_STYLE_SUFFIXES, HASH_COMMENT_SUFFIXES, SPECS
 from expansion_filters import expansion_views
 from expansion_rules import EXPANSION_SPECS
+from metadata_rules import review_metadata
 
 MAX_DOWNLOAD = 20 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 5000
@@ -35,7 +36,11 @@ SOURCE_SUFFIXES = frozenset({
     ".kt", ".swift", ".cs", ".ps1", ".dart", ".lua", ".sql", ".tf", ".tfvars",
     ".hcl", ".dockerfile", ".yaml", ".yml", ".toml", ".json", ".html",
 })
-SOURCE_NAMES = frozenset({"Dockerfile", "Containerfile", "Makefile"})
+SOURCE_NAMES = frozenset({"Dockerfile", "Containerfile", "Makefile", "requirements.txt"})
+
+
+def is_requirements_name(name: str) -> bool:
+    return bool(re.fullmatch(r"requirements(?:[-_.][A-Za-z0-9_-]+)?\.txt", name, re.I))
 
 
 def is_dockerfile_name(name: str) -> bool:
@@ -269,7 +274,7 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             if (
                 any(part in IGNORED_PARTS for part in rel.parts)
                 or (rel.suffix.lower() not in SOURCE_SUFFIXES and rel.name not in SOURCE_NAMES
-                    and not is_dockerfile_name(rel.name))
+                    and not is_dockerfile_name(rel.name) and not is_requirements_name(rel.name))
                 or member.size > MAX_FILE_BYTES
             ):
                 result.skipped_files += 1
@@ -347,6 +352,15 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
                             break
                 if result.partial:
                     break
+            if not result.partial:
+                for spec, metadata_line in review_metadata(rel, lines):
+                    result.findings.append(Finding(
+                        spec.identifier, spec.severity, spec.title,
+                        str(rel), metadata_line, spec.advice, spec.category,
+                    ))
+                    if len(result.findings) >= MAX_FINDINGS:
+                        result.partial = True
+                        break
             if result.partial:
                 break
     return result

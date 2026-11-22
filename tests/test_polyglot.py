@@ -6,6 +6,7 @@ import unittest
 
 from audit_filters import hash_language_code
 from audit_guidance import GUIDANCE, guidance_for
+from metadata_rules import SPECS as METADATA_SPECS
 from gitaudit import RULES, SOURCE_SUFFIXES, analyze_archive, render_markdown
 from polyglot_rules import C_STYLE_SUFFIXES, HASH_COMMENT_SUFFIXES, SPECS
 from report_html import render_html
@@ -140,7 +141,7 @@ class LanguageCoverageContractTests(unittest.TestCase):
         self.assertEqual(len(SPECS), 20)
 
     def test_each_rule_has_specific_guidance(self):
-        self.assertEqual(set(GUIDANCE), {rule.identifier for rule in RULES})
+        self.assertEqual(set(GUIDANCE), {rule.identifier for rule in RULES} | {rule.identifier for rule in METADATA_SPECS})
 
     def test_new_rules_have_guidance_not_fallback(self):
         for spec in SPECS:

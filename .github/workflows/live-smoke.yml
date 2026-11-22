@@ -9,6 +9,7 @@ on:
       - feat/actionable-html-reports-v0.3
       - feat/polyglot-rules-v0.4
       - feat/dart-lua-sql-terraform-docker-v0.5
+      - feat/workflow-dependencies-v0.6
   workflow_dispatch:
 
 permissions:

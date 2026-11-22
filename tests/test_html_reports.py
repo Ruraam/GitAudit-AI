@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import patch
 
 from audit_guidance import GUIDANCE, guidance_for
+from metadata_rules import SPECS as METADATA_SPECS
 from gitaudit import AuditResult, Finding, RULES, main, render_markdown
 from report_html import render_html, source_url
 
@@ -45,7 +46,7 @@ def archive_bytes(content="unsafe { work(); }\n", filename="src/main.rs"):
 
 class GuidanceCoverageTests(unittest.TestCase):
     def test_each_current_rule_has_guidance(self):
-        self.assertEqual(set(GUIDANCE), {r.identifier for r in RULES})
+        self.assertEqual(set(GUIDANCE), {r.identifier for r in RULES} | {r.identifier for r in METADATA_SPECS})
 
     def test_guidance_not_empty_and_actionable(self):
         for rule_id, guidance in GUIDANCE.items():
