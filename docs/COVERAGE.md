@@ -1,6 +1,6 @@
 # GitAudit AI — couverture et limites
 
-**État du prototype : v0.5 (branche de développement)**. GitAudit AI lit statiquement des fichiers texte sélectionnés. Les règles produisent des **indices heuristiques à vérifier**, jamais des vulnérabilités confirmées. Aucun code du dépôt cible n'est exécuté.
+**État du prototype : v0.6 (branche de développement)**. GitAudit AI lit statiquement des fichiers texte sélectionnés. Les règles produisent des **indices heuristiques à vérifier**, jamais des vulnérabilités confirmées. Aucun code du dépôt cible n'est exécuté.
 
 ## Langages ciblés et familles de règles
 
@@ -26,7 +26,18 @@
 | Dockerfile / Containerfile | `Dockerfile*`, `Containerfile*` | tag `latest`, scripts distants, `USER root`, `ADD` distant |
 | Docker Compose | `compose*.yml/.yaml`, `docker-compose*.yml/.yaml` | `privileged: true`, `network_mode: host` |
 
-**62 règles au total**, dont 22 nouvelles en v0.5. Les fichiers YAML, JSON, TOML, HTML et Makefile bénéficient de quelques règles génériques ; seuls les **fichiers Compose nommés explicitement** reçoivent les deux règles Docker Compose. Les fichiers HCL génériques `.hcl` sont lus, mais **pas couverts par les règles Terraform limitées à `.tf` / `.tfvars`**. Les fichiers `.dockerfile` sont lus, mais les règles Docker ciblent les noms Dockerfile/Containerfile habituels.
+**71 règles au total**, dont 9 règles supplémentaires en v0.6 portant sur les workflows et les manifestes. Les 62 règles précédentes restent actives. Les fichiers YAML, JSON, TOML, HTML et Makefile bénéficient de quelques règles génériques ; seuls les **fichiers Compose nommés explicitement** reçoivent les deux règles Docker Compose. Les fichiers HCL génériques `.hcl` sont lus, mais **pas couverts par les règles Terraform limitées à `.tf` / `.tfvars`**. Les fichiers `.dockerfile` sont lus, mais les règles Docker ciblent les noms Dockerfile/Containerfile habituels.
+
+## Workflows CI et dépendances : contrôle v0.6
+
+| Format ciblé | Portée | Exemples de constats |
+|---|---|---|
+| `.github/workflows/*.yml/.yaml` | Lignes YAML ciblées uniquement | actions à ref mutable, `permissions: write-all`, `contents: write`, `pull_request_target`, `persist-credentials: true` |
+| `package.json` | `dependencies`, `devDependencies`, `optionalDependencies`, `peerDependencies` (JSON valide) | versions `*`/`latest`, URL de dépendance HTTP non chiffrée |
+| `requirements*.txt` | Déclarations simples | nom de paquet ou intervalle de versions non fixé (revue, pas une vulnérabilité) |
+| `Cargo.toml` | Sections de dépendances courantes | version `*` |
+
+Les contrôles YAML et TOML ne sont **pas** des parseurs complets. Les tests ne récupèrent pas les paquets et n'interrogent **aucune base de vulnérabilités**. Les versions non fixées peuvent être des choix intentionnels, en particulier dans les bibliothèques.
 
 ## Les types de tests réellement automatisés
 
@@ -43,8 +54,8 @@ La génération de rapports et les règles sont testées, mais cela ne signifie 
 ## Ce qui n'est PAS couvert (à développer par phases)
 
 1. **Parseurs spécifiques et précision** : analyse syntaxique / AST par langage, prise en charge des chaînes complexes, fichiers multilignes, macros et faux négatifs.
-2. **Dépendances / supply chain** : SBOM, versions vulnérables, signature des artefacts, provenance et licences.
-3. **Configurations** : GitHub Actions, Docker, IaC, Kubernetes, permissions CI, infrastructure cloud, secrets dans l'historique Git.
+2. **Dépendances / supply chain** : au-delà des nouveaux indices statiques, SBOM, vérification des versions réellement vulnérables, lockfiles, signatures d'artefacts, provenance et licences restent à développer.
+3. **Configurations** : les nouveaux indices GitHub Actions ne remplacent pas l'analyse structurelle YAML, des flux de confiance, des permissions effectives, de Kubernetes, du cloud ou des secrets dans l'historique Git.
 4. **Tests de projet en environnement isolé** : lint, compilation, tests unitaires et d'intégration. Cela **nécessite un consentement explicite**, une isolation forte, des quotas, et ne doit jamais exécuter automatiquement le code non fiable d'un dépôt public.
 5. **Fuzzing / mutation / propriétés** : générer des variations déterministes et mesurer si nos règles résistent aux changements de syntaxe et détectent les anomalies introduites.
 6. **Langages et écosystèmes à venir** : R, Scala, Elixir, Haskell, Objective-C, Perl, Zig, Nix, Kubernetes, Helm et autres ; approfondir Dart, Lua, SQL, Terraform et Docker avec de vrais parseurs et règles contextuelles.
