@@ -74,6 +74,15 @@ class LandingPageTests(unittest.TestCase):
         self.assertIn("n’est pas encore disponible", self.page)
         self.assertIn("réservée aux personnes autorisées", self.page)
 
+    def test_durable_snapshot_matches_published_values(self):
+        import json
+        from pathlib import Path
+        path = Path(__file__).resolve().parent.parent / "docs" / "examples" / "bubblewm-snapshot.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual([x["findings_total"] for x in data["scans"]], [10, 42])
+        self.assertIn('href="examples/bubblewm-snapshot.json"', self.page)
+        self.assertIn("44971101170", data["source_run"])
+
     def test_static_example_is_dated(self):
         self.assertIn("22 novembre 2026", self.page)
         self.assertIn("ne sont pas des indicateurs actualisés", self.page)
