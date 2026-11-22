@@ -10,6 +10,7 @@ on:
       - feat/polyglot-rules-v0.4
       - feat/dart-lua-sql-terraform-docker-v0.5
       - feat/workflow-dependencies-v0.6
+      - fix/audit-credibility-p0
   workflow_dispatch:
 
 permissions:
