@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 """Lightweight lexical masking for Lua, SQL, HCL, Compose and Docker.
 
 For each line return (comments_removed, comments_and_strings_removed).
