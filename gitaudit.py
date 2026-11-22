@@ -12,7 +12,7 @@ import re
 import sys
 import tarfile
 from urllib.error import URLError
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 MAX_DOWNLOAD = 20 * 1024 * 1024
@@ -65,6 +65,7 @@ class AuditResult:
     skipped_files: int
     findings: list[Finding]
     partial: bool
+    reference: str | None = None
 
 
 RULES = (
@@ -116,9 +117,23 @@ def normalize_repository(value: str) -> str:
     return f"{owner}/{repo}"
 
 
-def download_archive(repository: str) -> bytes:
-    """Get GitHub's default-branch snapshot; never run repository code."""
+def normalize_ref(value: str) -> str:
+    """Accept a bounded Git branch, tag, or SHA without control characters."""
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}", value):
+        raise ValueError("Référence Git invalide.")
+    if (
+        "//" in value or ".." in value or "/." in value
+        or value.endswith(("/", ".", ".lock"))
+    ):
+        raise ValueError("Référence Git invalide.")
+    return value
+
+
+def download_archive(repository: str, ref: str | None = None) -> bytes:
+    """Get a GitHub tarball snapshot; never run repository code."""
     url = f"https://api.github.com/repos/{repository}/tarball"
+    if ref is not None:
+        url += "/" + quote(normalize_ref(ref), safe="/")
     request = Request(url, headers={
         "User-Agent": "GitAudit-AI/0.1",
         "Accept": "application/vnd.github+json",
@@ -130,8 +145,8 @@ def download_archive(repository: str) -> bytes:
     return payload
 
 
-def analyze_archive(payload: bytes, repository: str) -> AuditResult:
-    result = AuditResult(repository, 0, 0, 0, [], False)
+def analyze_archive(payload: bytes, repository: str, reference: str | None = None) -> AuditResult:
+    result = AuditResult(repository, 0, 0, 0, [], False, reference)
     unpacked_bytes = 0
     try:
         archive = tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz")
@@ -150,8 +165,9 @@ def analyze_archive(payload: bytes, repository: str) -> AuditResult:
                 result.partial = True
                 break
             # GitHub archives prefix every path with a root directory.
-            parts = PurePosixPath(member.name).parts
-            if len(parts) < 2 or ".." in parts:
+            path = PurePosixPath(member.name)
+            parts = path.parts
+            if path.is_absolute() or len(parts) < 2 or ".." in parts:
                 result.skipped_files += 1
                 continue
             rel = PurePosixPath(*parts[1:])
@@ -204,7 +220,7 @@ def render_markdown(result: AuditResult) -> str:
         "# Rapport GitAudit AI v0.1",
         "",
         f"**Dépôt :** `{result.repository}`",
-        "**Périmètre :** branche par défaut, analyse statique sans exécution.",
+        f"**Périmètre :** {result.reference or 'branche par défaut'}, analyse statique sans exécution.",
         "",
         "## Résumé",
         "",
@@ -251,10 +267,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("repository", help="owner/repo ou https://github.com/owner/repo")
     parser.add_argument("--report", help="Chemin de sortie Markdown")
     parser.add_argument("--json", help="Chemin de sortie JSON")
+    parser.add_argument("--ref", help="Branche, tag ou SHA Git (défaut : branche principale)")
     args = parser.parse_args(argv)
     try:
         repository = normalize_repository(args.repository)
-        result = analyze_archive(download_archive(repository), repository)
+        reference = normalize_ref(args.ref) if args.ref is not None else None
+        payload = download_archive(repository, reference) if reference is not None else download_archive(repository)
+        result = analyze_archive(payload, repository, reference)
         markdown = render_markdown(result)
         if args.report:
             from pathlib import Path

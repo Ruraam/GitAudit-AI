@@ -7,7 +7,7 @@ GitAudit AI est un **prototype d'analyse statique de dépôts GitHub publics**, 
 ## Fonctionnement de la version 0.1
 
 - Accepte uniquement une adresse `owner/repo` ou `https://github.com/owner/repo`.
-- Télécharge un instantané de la **branche par défaut** du dépôt via l'API GitHub.
+- Télécharge un instantané de la **branche par défaut ou d'une référence choisie** (branche, tag ou SHA) via l'API GitHub.
 - Inspecte des fichiers source **sans exécuter le code cible** et **sans extraire l'archive sur disque**.
 - Repère plusieurs motifs suspects : `eval()`, `shell=True`, `pickle.loads()`, TLS désactivé, `curl | sh`, en-têtes de clés privées et marqueurs TODO/FIXME.
 - Génère des rapports **Markdown** et **JSON**, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
@@ -20,6 +20,7 @@ Avec Python 3.10+ et une connexion Internet :
 ```bash
 python3 -m unittest discover -s tests -v
 python3 gitaudit.py Ruraam/BubbleWM --report report.md --json report.json
+python3 gitaudit.py Ruraam/BubbleWM --ref feature/wlr-layer-shell --report report-dev.md --json report-dev.json
 ```
 
 Les rapports `report.md` et `report.json` seront créés dans le répertoire courant.
@@ -30,10 +31,10 @@ Après fusion de la branche de développement :
 
 1. Ouvrir l'onglet **Actions** du dépôt GitAudit-AI.
 2. Choisir **Audit a public GitHub repository** puis **Run workflow**.
-3. Entrer le nom du dépôt public, par exemple `Ruraam/BubbleWM`.
+3. Entrer le nom du dépôt public, par exemple `Ruraam/BubbleWM` ; renseigner facultativement la branche (`feature/wlr-layer-shell`), le tag ou le SHA.
 4. Télécharger les rapports depuis l'artefact **gitaudit-report** de l'exécution.
 
-Les validations automatiques (tests Python) tournent à chaque changement via GitHub Actions. Les audits de dépôts externes ne sont déclenchés **que manuellement**.
+Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à chaque changement. Le workflow **Live smoke test - BubbleWM** exécute un audit réel et limité sur `main` et `feature/wlr-layer-shell` lors des changements de la branche de tests `test/security-regression-suite`. Les autres audits restent **manuels**.
 
 ## Sécurité et limites de coûts
 
@@ -43,6 +44,8 @@ Les validations automatiques (tests Python) tournent à chaque changement via Gi
 - Les Actions sont soumises aux quotas et aux règles de facturation GitHub : ne pas supposer un usage illimité.
 - V0.1 inspecte des motifs textuels : **absence de détection ≠ absence de faille**.
 - Les archives dépassant 20 Mio sont refusées ; les analyses trop volumineuses sont signalées comme partielles.
+- Une référence Git demandée est strictement validée avant téléchargement ; seules des références de caractères simples sont acceptées.
+- L'analyseur vérifie des motifs dans les fichiers, pas les problèmes de logique métier ni l'ensemble des dépendances.
 
 ## Feuille de route
 
