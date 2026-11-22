@@ -1,16 +1,18 @@
 # GitAudit AI
 
-GitAudit AI est un **prototype d'analyse statique de dépôts GitHub publics**, lancé avec **0 € de budget initial**. Il ne nécessite ni IA payante ni compte serveur.
+GitAudit AI est un **prototype expérimental d'analyse statique de dépôts GitHub publics**, lancé avec **0 € de budget initial**. Malgré le nom historique « AI », **le moteur actuel n'utilise pas de modèle d'IA** : il applique des heuristiques déterministes, sans API payante ni serveur.
+
+**Licence : aucune licence de réutilisation n'est encore publiée.** Le code est visible publiquement, mais cela ne lui confère pas automatiquement le statut « open source » ni le droit de redistribution. Ne pas promouvoir le projet comme logiciel libre tant qu'une licence n'a pas été choisie et ajoutée par le titulaire des droits.
 
 > ⚠️ Ce n'est **pas** un audit de sécurité complet. Les résultats sont des indices heuristiques à vérifier : il existe des faux positifs et des faux négatifs.
 
-## Fonctionnement du prototype (v0.6 en développement)
+## Fonctionnement du prototype (v0.7 en développement, non publié)
 
 - Accepte uniquement une adresse `owner/repo` ou `https://github.com/owner/repo`.
 - Télécharge un instantané de la **branche par défaut ou d'une référence choisie** (branche, tag ou SHA) via l'API GitHub.
 - Inspecte des fichiers source **sans exécuter le code cible** et **sans extraire l'archive sur disque**.
 - Repère **62 motifs heuristiques** en Python, Rust, Bash, JavaScript/TypeScript, Go, Java, Kotlin, C/C++, PHP, Ruby, Swift, C#, PowerShell, **Dart/Flutter, Lua, SQL, Terraform et Docker/Compose**. Les alertes sont des points à examiner, pas une preuve de faille.
-- Vérifie également **9 indices dans les fichiers de CI et de dépendances** : épinglage des GitHub Actions, permissions du jeton, `pull_request_target`, versions NPM flottantes, téléchargements HTTP, dépendances Python et Cargo non fixées. **71 règles** au total ; ce n'est pas une base de vulnérabilités connues.
+- Vérifie également **9 indices dans les fichiers de CI et de dépendances** : épinglage des GitHub Actions, permissions du jeton, `pull_request_target`, versions NPM flottantes, téléchargements HTTP, dépendances Python et Cargo non fixées. **71 règles** du lot v0.6, auxquelles s’ajoutent des motifs de secrets en développement dans la v0.7 ; ce n'est pas une base de vulnérabilités connues.
 - Génère des rapports **Markdown**, **JSON** et **HTML autonome** lisible dans un navigateur, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
 - Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
 - Chaque règle propose : *pourquoi examiner*, *action recommandée* et *validation*. Les conseils figurent dans le Markdown et l'HTML.
