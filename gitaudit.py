@@ -45,6 +45,7 @@ class Rule:
     pattern: re.Pattern[str]
     suffixes: frozenset[str] | None
     advice: str
+    skip_comments: bool = False
 
 
 @dataclass(frozen=True)
@@ -77,11 +78,63 @@ RULES = (
          "Ne pas désérialiser de contenu non fiable avec pickle."),
     Rule("PY004", "high", "Vérification TLS désactivée", re.compile(r"\bverify\s*=\s*False\b"), PY,
          "Conserver la validation des certificats TLS."),
+    Rule("PY005", "medium", "Exécution d'une commande via os.system()",
+         re.compile(r"\bos\.system\s*\("), PY,
+         "Préférer subprocess avec liste d'arguments et sans shell.",
+         skip_comments=True),
+    Rule("PY006", "high", "Contexte TLS sans validation de certificat",
+         re.compile(r"\bssl\._create_unverified_context\s*\("), PY,
+         "Utiliser un contexte TLS vérifiant les certificats.",
+         skip_comments=True),
+    Rule("PY007", "medium", "Nom temporaire créé sans ouverture atomique",
+         re.compile(r"\btempfile\.mktemp\s*\("), PY,
+         "Préférer NamedTemporaryFile ou mkstemp pour éviter les courses.",
+         skip_comments=True),
+    Rule("PY008", "high", "Chargement YAML non sûr",
+         re.compile(r"\byaml\.unsafe_load\s*\("), PY,
+         "Préférer yaml.safe_load pour les données non fiables.",
+         skip_comments=True),
+    Rule("RS001", "low", "Bloc unsafe Rust à examiner",
+         re.compile(r"\bunsafe\s*\{"), frozenset({".rs"}),
+         "Documenter les invariants de sûreté et vérifier leur maintien.",
+         skip_comments=True),
+    Rule("RS002", "medium", "Transmutation Rust à examiner",
+         re.compile(r"\b(?:std::mem::)?transmute\s*(?:::\s*<[^>]+>)?\s*\("),
+         frozenset({".rs"}),
+         "Vérifier les tailles, alignements, représentations et invariants.",
+         skip_comments=True),
+    Rule("RS003", "high", "Validation TLS désactivée en Rust",
+         re.compile(r"\bdanger_accept_invalid_(?:certs|hostnames)\s*\(\s*true\s*\)"),
+         frozenset({".rs"}),
+         "Ne pas désactiver la vérification TLS en production.",
+         skip_comments=True),
+    Rule("RS004", "medium", "Interpréteur shell lancé avec -c en Rust",
+         re.compile(r"\b(?:std::process::)?Command::new\s*\(\s*[\"'](?:sh|bash)[\"']\s*\)\s*\.arg\s*\(\s*[\"']-c[\"']"),
+         frozenset({".rs"}),
+         "Préférer des commandes directes ; traiter les paramètres externes comme non fiables.",
+         skip_comments=True),
     Rule("JS001", "medium", "Appel à eval() en JavaScript", re.compile(r"\beval\s*\("), JS,
          "Éviter d'évaluer du texte comme du code."),
     Rule("SH001", "high", "Script téléchargé exécuté directement",
-         re.compile(r"\b(?:curl|wget)\b.*\|\s*(?:sh|bash)\b"), SHELL,
+         re.compile(r"\b(?:curl|wget)\b.*\|\s*(?:sudo\s+)?(?:sh|bash)\b"), SHELL,
          "Télécharger, vérifier et examiner le script avant son exécution."),
+    Rule("SH002", "medium", "Évaluation dynamique d'une variable shell",
+         re.compile(r"\beval\s+\"?\s*\$(?:[A-Za-z_][A-Za-z_0-9]*|\{[A-Za-z_][A-Za-z_0-9]*\})"),
+         SHELL,
+         "Éviter eval avec des valeurs externes ; employer des tableaux d'arguments.",
+         skip_comments=True),
+    Rule("SH003", "medium", "Nom temporaire obtenu avec mktemp -u",
+         re.compile(r"\bmktemp\s+(?:-u|--dry-run)\b"), SHELL,
+         "Créer le fichier temporaire atomiquement avec mktemp sans -u.",
+         skip_comments=True),
+    Rule("SH004", "medium", "Permissions excessivement ouvertes",
+         re.compile(r"\bchmod\s+(?:-R\s+)?(?:0?777|a\+rwx)\b"), SHELL,
+         "Réduire les permissions au minimum nécessaire.",
+         skip_comments=True),
+    Rule("SH005", "low", "Arrêt sur erreur désactivé dans un script",
+         re.compile(r"\bset\s+\+e(?:\s|$)"), SHELL,
+         "Vérifier que la désactivation temporaire du contrôle des erreurs est justifiée.",
+         skip_comments=True),
     Rule("GEN001", "high", "En-tête de clé privée détecté",
          re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----"), None,
          "Vérifier si la clé est réelle ; la révoquer et la remplacer si elle a été exposée."),
@@ -89,6 +142,16 @@ RULES = (
          re.compile(r"\b(?:TODO|FIXME)\b"), None,
          "Vérifier si le travail signalé est toujours nécessaire."),
 )
+
+
+def is_comment_line(line: str, suffix: str) -> bool:
+    """Skip obvious comment-only lines for the new heuristic rules."""
+    content = line.lstrip()
+    if suffix in PY or suffix in SHELL:
+        return content.startswith("#")
+    if suffix == ".rs":
+        return content.startswith(("//", "/*", "*"))
+    return False
 
 
 def normalize_repository(value: str) -> str:
@@ -197,6 +260,8 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             for line_number, line in enumerate(lines, 1):
                 for rule in RULES:
                     if rule.suffixes is not None and suffix not in rule.suffixes:
+                        continue
+                    if rule.skip_comments and is_comment_line(line, suffix):
                         continue
                     if rule.pattern.search(line):
                         result.findings.append(Finding(
