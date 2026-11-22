@@ -1,0 +1,117 @@
+name: Live smoke test - BubbleWM
+
+on:
+  push:
+    branches:
+      - main
+      - release/agpl-v0.7-consolidation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitaudit-live-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-smoke:
+    name: BubbleWM / ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ref: main
+            label: main
+          - ref: feature/wlr-layer-shell
+            label: wlr-layer-shell
+    steps:
+      - name: Checkout GitAudit AI
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Audit public BubbleWM branch (read only)
+        env:
+          TARGET_REF: ${{ matrix.ref }}
+        run: |
+          python3 gitaudit.py Ruraam/BubbleWM --ref "$TARGET_REF" \
+            --report report.md --json report.json --html report.html
+
+      - name: Assert live report contract
+        env:
+          TARGET_REF: ${{ matrix.ref }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = Path("report.md")
+          data = json.loads(Path("report.json").read_text(encoding="utf-8"))
+          assert report.is_file() and report.stat().st_size > 0
+          html_report = Path("report.html")
+          assert html_report.is_file() and html_report.stat().st_size > 0
+          html_content = html_report.read_text(encoding="utf-8")
+          assert "<html lang=\"fr\">" in html_content
+          assert "default-src &#39;none&#39;" in html_content
+          assert "<script" not in html_content.lower()
+          assert "Constats et recommandations" in html_content
+          assert data["repository"] == "Ruraam/BubbleWM"
+          assert data["reference"] == os.environ["TARGET_REF"]
+          assert isinstance(data["scanned_files"], int)
+          assert data["scanned_files"] > 0, "Le dépôt n'a pas été analysé"
+          assert data["scanned_lines"] > 0, "Le rapport est vide"
+          assert isinstance(data["findings"], list)
+          assert all({"rule", "severity", "path", "line", "advice", "category"} <= item.keys()
+                     for item in data["findings"])
+          assert all(item["category"] in {"risk", "review", "maintenance"}
+                     for item in data["findings"])
+          assert all(item["severity"] in {"high", "medium", "low"}
+                     for item in data["findings"])
+          assert all(item["line"] >= 1 for item in data["findings"])
+          text = report.read_text(encoding="utf-8")
+          assert data["reference"] in text
+          assert "ne signifie jamais" in text
+
+          summary = (
+              f"## GitAudit AI - BubbleWM / {data['reference']}\n\n"
+              f"- Fichiers analysés : **{data['scanned_files']}**\n"
+              f"- Lignes analysées : **{data['scanned_lines']}**\n"
+              f"- Indices : **{len(data['findings'])}**\n"
+              f"- Risques potentiels : **{sum(x['category'] == 'risk' for x in data['findings'])}**\n"
+              f"- Revues manuelles : **{sum(x['category'] == 'review' for x in data['findings'])}**\n"
+              f"- Analyse partielle : **{data['partial']}**\n"
+              "\n> Diagnostic heuristique, pas une certification de sécurité.\n"
+          )
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write(summary)
+          from collections import Counter
+          by_rule = Counter(item["rule"] for item in data["findings"])
+          print("Rule breakdown: " + ", ".join(
+              f"{rule}={count}" for rule, count in sorted(by_rule.items())
+          ))
+          by_category = Counter(item["category"] for item in data["findings"])
+          print("Category breakdown: " + ", ".join(
+              f"{category}={count}" for category, count in sorted(by_category.items())
+          ))
+          print(
+              f"BubbleWM audit {data['reference']} OK: "
+              f"{data['scanned_files']} fichiers, "
+              f"{data['scanned_lines']} lignes, {len(data['findings'])} indices, "
+              f"partiel={data['partial']}"
+          )
+          PY
+
+      - name: Attach Markdown and JSON reports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: bubblewm-audit-${{ matrix.label }}
+          path: |
+            report.md
+            report.json
+            report.html
+          retention-days: 7
+          if-no-files-found: error

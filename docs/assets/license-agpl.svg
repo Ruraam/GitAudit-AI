@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="202" height="28" viewBox="0 0 202 28" role="img" aria-label="Licence GNU AGPL-3.0-only">
+<rect width="202" height="28" rx="5" fill="#102232"/>
+<path d="M76 0H197Q202 0 202 5V23Q202 28 197 28H76Z" fill="#0b897c"/>
+<text x="38" y="18.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#edf7fd" text-anchor="middle">licence</text>
+<text x="139" y="18.5" font-family="DejaVu Sans, Arial, sans-serif" font-weight="bold" font-size="11" fill="#fff" text-anchor="middle">AGPL-3.0-only</text>
+</svg>

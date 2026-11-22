@@ -8,6 +8,11 @@ on:
         required: true
         default: "Ruraam/BubbleWM"
         type: string
+      ref:
+        description: "Optional branch, tag or SHA (leave blank for default branch)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -18,7 +23,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout auditor
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Unit tests
         run: python3 -m unittest discover -s tests -v
@@ -26,16 +33,23 @@ jobs:
       - name: Run read-only audit
         env:
           TARGET_REPOSITORY: ${{ inputs.repository }}
+          TARGET_REF: ${{ inputs.ref }}
         run: |
-          python3 gitaudit.py "$TARGET_REPOSITORY" \
-            --report report.md --json report.json
+          if [ -n "$TARGET_REF" ]; then
+            python3 gitaudit.py "$TARGET_REPOSITORY" --ref "$TARGET_REF" \
+              --report report.md --json report.json --html report.html
+          else
+            python3 gitaudit.py "$TARGET_REPOSITORY" \
+              --report report.md --json report.json --html report.html
+          fi
 
       - name: Upload report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: gitaudit-report
           path: |
             report.md
             report.json
+            report.html
           retention-days: 7
           if-no-files-found: error

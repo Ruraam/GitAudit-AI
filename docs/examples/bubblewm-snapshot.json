@@ -1,0 +1,39 @@
+{
+  "kind": "historical_aggregate_only",
+  "captured_on": "2026-11-22",
+  "auditor": "GitAudit AI v0.6 development",
+  "auditor_commit": "5bf484e4520ef52bae741a8037a8017615f2e2ab",
+  "source_run": "https://github.com/Ruraam/GitAudit-AI/actions/runs/44971101170",
+  "repository": "Ruraam/BubbleWM",
+  "note": "Résultats agrégés vérifiés dans les journaux GitHub Actions ; ce fichier n'est pas un rapport détaillé complet ni une certification de sécurité.",
+  "scans": [
+    {
+      "reference": "main",
+      "scanned_files": 13,
+      "scanned_lines": 4361,
+      "partial": false,
+      "findings_total": 10,
+      "findings_by_rule": {
+        "RS001": 8,
+        "WF001": 2
+      },
+      "categories": {
+        "review": 10
+      }
+    },
+    {
+      "reference": "feature/wlr-layer-shell",
+      "scanned_files": 30,
+      "scanned_lines": 11503,
+      "partial": false,
+      "findings_total": 42,
+      "findings_by_rule": {
+        "RS001": 40,
+        "WF001": 2
+      },
+      "categories": {
+        "review": 42
+      }
+    }
+  ]
+}
