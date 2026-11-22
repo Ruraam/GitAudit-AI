@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 """Additional language families for GitAudit AI's bounded static heuristics.
 
 These are review hints, not vulnerability proofs. Keep every rule scoped to
