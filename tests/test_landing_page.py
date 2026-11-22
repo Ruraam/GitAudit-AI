@@ -85,7 +85,10 @@ class LandingPageTests(unittest.TestCase):
 
     def test_static_example_is_dated(self):
         self.assertIn("22 novembre 2026", self.page)
-        self.assertIn("ne sont pas des indicateurs actualisés", self.page)
+        self.assertIn("v0.6", self.page)
+        self.assertIn("13 et 30 fichiers", self.page)
+        self.assertIn("15 et 33", self.page)
+        self.assertIn("ne sont pas actualisés automatiquement", self.page)
 
     def test_rule_count_is_current(self):
         self.assertIn("75 règles heuristiques", self.page)
@@ -97,8 +100,9 @@ class LandingPageTests(unittest.TestCase):
         self.assertIn("Licence GNU AGPL-3.0-only incluse", self.page)
         self.assertIn("en attente de fusion vers main", self.page)
 
-    def test_license_link_references_main_after_merge(self):
-        self.assertIn("https://github.com/Ruraam/GitAudit-AI/blob/main/LICENSE", self.page)
+    def test_license_link_resolves_on_proposed_release_commit(self):
+        self.assertIn("https://github.com/Ruraam/GitAudit-AI/blob/fc39d81772837b03d580117ab583fbcab54986d3/LICENSE", self.page)
+        self.assertNotIn("blob/main/LICENSE", self.page)
 
     def test_no_model_ai_claim(self):
         self.assertIn("aucun modèle d’IA n’est utilisé", self.page)
