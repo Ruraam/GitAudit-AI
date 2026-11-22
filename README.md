@@ -10,8 +10,9 @@ GitAudit AI est un **prototype d'analyse statique de dépôts GitHub publics**, 
 - Télécharge un instantané de la **branche par défaut ou d'une référence choisie** (branche, tag ou SHA) via l'API GitHub.
 - Inspecte des fichiers source **sans exécuter le code cible** et **sans extraire l'archive sur disque**.
 - Repère **20 motifs suspects** en Rust, Bash, Python et JavaScript : appels dangereux, TLS désactivé, transmutation/unsafe Rust, `eval` shell, `mktemp -u`, permissions excessives, clés privées et marqueurs TODO/FIXME.
-- Génère des rapports **Markdown** et **JSON**, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
+- Génère des rapports **Markdown**, **JSON** et **HTML autonome** lisible dans un navigateur, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
 - Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
+- Chaque règle propose : *pourquoi examiner*, *action recommandée* et *validation*. Les conseils figurent dans le Markdown et l'HTML.
 - Pour les règles ciblées, masque les commentaires et les littéraux Python, ainsi que les commentaires et certaines chaînes Rust, afin de réduire les faux positifs sans introduire de dépendance. Les filtres ne remplacent pas un véritable parseur.
 - Limite la taille des archives, des fichiers et des rapports, et signale si une analyse est partielle.
 
@@ -21,11 +22,11 @@ Avec Python 3.10+ et une connexion Internet :
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 gitaudit.py Ruraam/BubbleWM --report report.md --json report.json
-python3 gitaudit.py Ruraam/BubbleWM --ref feature/wlr-layer-shell --report report-dev.md --json report-dev.json
+python3 gitaudit.py Ruraam/BubbleWM --report report.md --json report.json --html report.html
+python3 gitaudit.py Ruraam/BubbleWM --ref feature/wlr-layer-shell --report report-dev.md --json report-dev.json --html report-dev.html
 ```
 
-Les rapports `report.md` et `report.json` seront créés dans le répertoire courant.
+Les fichiers demandés seront créés dans le répertoire courant. Ouvrir `report.html` ou `report-dev.html` dans **un navigateur**, y compris sur téléphone après téléchargement. Ces pages sont autonomes : **pas besoin de serveur, de JavaScript, de compte tiers ni d'accès Internet pour les lire** (les liens GitHub nécessitent Internet).
 
 ## Lancer un audit depuis GitHub (sans PC)
 
@@ -34,7 +35,7 @@ Après fusion de la branche de développement :
 1. Ouvrir l'onglet **Actions** du dépôt GitAudit-AI.
 2. Choisir **Audit a public GitHub repository** puis **Run workflow**.
 3. Entrer le nom du dépôt public, par exemple `Ruraam/BubbleWM` ; renseigner facultativement la branche (`feature/wlr-layer-shell`), le tag ou le SHA.
-4. Télécharger les rapports depuis l'artefact **gitaudit-report** de l'exécution.
+4. Télécharger l'artefact **gitaudit-report** de l'exécution, décompresser le ZIP, puis ouvrir **`report.html`** dans le navigateur. Le ZIP contient aussi `report.md` et `report.json`.
 
 Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à chaque changement. Le workflow **Live smoke test - BubbleWM** exécute un audit réel et limité sur `main` et `feature/wlr-layer-shell` lors des changements de la branche de tests `test/security-regression-suite`. Les autres audits restent **manuels**.
 
@@ -48,6 +49,7 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 - Les nouvelles règles de langage utilisent des filtres légers pour supprimer les commentaires et les chaînes pertinentes dans leurs recherches. Ces filtres ne couvrent **pas toutes les syntaxes ni tous les langages** : des faux positifs et négatifs restent possibles, notamment dans les macros Rust, les chaînes shell et les f-strings Python.
 - Les règles anciennes (ex. détection d'en-tête de clé privée) continuent d'examiner le texte brut pour éviter de masquer les secrets dans des littéraux.
 - La catégorie `review` est utilisée pour les blocs Rust `unsafe` et les transmutations, car leur présence seule ne démontre pas un problème de sécurité.
+- L'HTML utilise **des styles intégrés uniquement**, aucune ressource externe et une politique de sécurité restrictive (CSP) ; les contenus issus des dépôts sont échappés pour limiter l'injection HTML.
 - Les archives dépassant 20 Mio sont refusées ; les analyses trop volumineuses sont signalées comme partielles.
 - Une référence Git demandée est strictement validée avant téléchargement ; seules des références de caractères simples sont acceptées.
 - L'analyseur vérifie des motifs dans les fichiers, pas les problèmes de logique métier ni l'ensemble des dépendances.
@@ -56,7 +58,7 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 
 1. **V0.1** : prototype statique et rapports, CI et exécution manuelle.
 2. **V0.2 (en cours)** : 20 règles ciblées en Rust/Bash/Python/JS ; tests positifs et négatifs, audits de branches actives, **catégorisation des constats** et filtrage de sources pour améliorer la précision.
-3. **V0.3** : interface web de démonstration, sans service commercial activé.
+3. **V0.3 (en cours)** : rapports HTML autonomes, accessibles dans un navigateur, recommandations humaines par règle ; ensuite, vitrine statique éventuelle. **Ce n'est pas encore un site public d'audit automatisé**.
 4. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
 
 Ce projet est indépendant de BubbleOS et n'y apporte aucune modification.
