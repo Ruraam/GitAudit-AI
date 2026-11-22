@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - test/security-regression-suite
+      - feat/rules-rust-bash-python-v0.2
   workflow_dispatch:
 
 permissions:
@@ -76,6 +77,11 @@ jobs:
           )
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
               handle.write(summary)
+          from collections import Counter
+          by_rule = Counter(item["rule"] for item in data["findings"])
+          print("Rule breakdown: " + ", ".join(
+              f"{rule}={count}" for rule, count in sorted(by_rule.items())
+          ))
           print(
               f"BubbleWM audit {data['reference']} OK: "
               f"{data['scanned_files']} fichiers, "
