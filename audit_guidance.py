@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 """Actionable, bounded and conservative advice for heuristic scan findings.
 
 Every entry suggests a human review, not an automatic patch or an assertion
