@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout auditor
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Unit tests
         run: python3 -m unittest discover -s tests -v
