@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 """Lightweight source-aware filtering used only to reduce heuristic false positives.
 
 The scanners are intentionally limited. They do not replace a complete language
