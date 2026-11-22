@@ -195,7 +195,8 @@ class ArchiveHardeningTests(unittest.TestCase):
             sample("asset.png", "eval(x)\n"),
             sample("README.md", "eval(x)\n"),
         ])
-        self.assertEqual(result.scanned_files, 0)
+        self.assertEqual(result.scanned_files, 1)
+        self.assertEqual(result.findings, [])
 
     def test_dockerfile_is_included(self):
         result = self.analyze([sample("Dockerfile", "# TODO: pin base\n")])

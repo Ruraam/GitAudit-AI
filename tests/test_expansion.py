@@ -142,7 +142,7 @@ for name, item in CASES.items():
 
 class ExpansionContractTests(unittest.TestCase):
     def test_rule_count(self):
-        self.assertEqual(len(RULES), 62)
+        self.assertEqual(len(RULES), 66)
 
     def test_new_rules_count(self):
         self.assertEqual(len(EXPANSION_SPECS), 22)

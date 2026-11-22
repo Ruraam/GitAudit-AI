@@ -262,7 +262,7 @@ class ArchiveMutationTests(unittest.TestCase):
             regular("données/été.py", "eval(user)\n"),
             regular("docs/readme.md", "eval(user)\n"),
         ])
-        self.assertEqual(result.scanned_files, 1)
+        self.assertEqual(result.scanned_files, 2)
         self.assertEqual(len(result.findings), 1)
 
     def test_cap_findings_marks_partial(self):

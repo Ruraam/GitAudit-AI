@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="GitAudit AI : prototype libre d'analyse statique de dépôts GitHub publics, avec rapports HTML lisibles et recommandations à vérifier.">
+  <meta name="description" content="GitAudit AI : prototype expérimental d’analyse statique de dépôts GitHub publics, avec rapports HTML lisibles et recommandations à vérifier.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="dark">
   <title>GitAudit AI — Audit statique et rapports lisibles</title>
@@ -59,20 +59,20 @@
 </div></header>
 <main id="contenu">
   <section class="hero wrap" id="accueil">
-    <p class="eyebrow">Prototype open source · Audits en lecture seule</p>
+    <p class="eyebrow">Code public consultable · Audits en lecture seule</p>
     <h1>Comprendre les risques du code. <span>Sans fausses promesses.</span></h1>
-    <p class="lead">GitAudit AI examine les fichiers de dépôts GitHub publics, classe les indices relevés et prépare des rapports HTML, Markdown et JSON avec des pistes de vérification. Il n’exécute jamais le code du dépôt analysé.</p>
+    <p class="lead">GitAudit AI examine les fichiers de dépôts GitHub publics, classe les indices relevés et prépare des rapports HTML, Markdown et JSON avec des pistes de vérification. Il n’exécute jamais le code du dépôt analysé. <strong>Le moteur actuel repose sur des règles déterministes : aucun modèle d’IA n’est utilisé.</strong></p>
     <div class="actions">
       <a class="link-btn primary" href="https://github.com/Ruraam/GitAudit-AI">Explorer le dépôt GitHub</a>
       <a class="link-btn" href="https://github.com/Ruraam/GitAudit-AI/actions">Voir les audits et rapports</a>
     </div>
-    <p class="notice"><strong>Version expérimentale :</strong> cet outil ne certifie pas la sécurité d’un dépôt et peut manquer des problèmes ou signaler de faux positifs. L’analyse publique à la demande par n’importe quel visiteur n’est pas encore disponible.</p>
+    <p class="notice"><strong>Version expérimentale :</strong> cet outil ne certifie pas la sécurité d’un dépôt et peut manquer des problèmes ou signaler de faux positifs. L’analyse publique à la demande par n’importe quel visiteur n’est pas encore disponible. <strong>Le dépôt ne dispose pas encore d’une licence de réutilisation : code visible ne signifie pas open source.</strong></p>
   </section>
   <section class="wrap" id="fonctionnement">
     <h2>Comment ça fonctionne</h2>
     <div class="grid">
       <article class="card"><span class="number">1</span><h3>Choisir un dépôt</h3><p>L’exploitant indique un dépôt GitHub public et, si nécessaire, une branche, un tag ou un commit.</p></article>
-      <article class="card"><span class="number">2</span><h3>Examiner sans exécuter</h3><p>Le programme lit un instantané limité du code et cherche 71 indices heuristiques dans les sources, les workflows GitHub Actions et certains manifestes de dépendances.</p></article>
+      <article class="card"><span class="number">2</span><h3>Examiner sans exécuter</h3><p>Le programme lit un instantané limité du code et applique 75 règles heuristiques aux sources, les workflows GitHub Actions et certains manifestes de dépendances.</p></article>
       <article class="card"><span class="number">3</span><h3>Lire les recommandations</h3><p>Un rapport HTML autonome explique la nature des indices, une action possible et comment vérifier le résultat.</p></article>
     </div>
   </section>
@@ -80,11 +80,11 @@
     <div class="section-head"><h2>Exemple : BubbleWM</h2><span class="capsule">Audits vérifiés</span></div>
     <p class="muted">Instantané des vérifications du 22 novembre 2026. Ce ne sont pas des indicateurs actualisés automatiquement.</p>
     <div class="grid">
-      <article class="card"><h3>Branche principale</h3><div class="stat">8</div><p>Points de revue sur 13 fichiers examinés.</p></article>
-      <article class="card"><h3>Branche Wayland active</h3><div class="stat">40</div><p>Points de revue sur 30 fichiers examinés.</p></article>
-      <article class="card"><h3>Ce que ces chiffres veulent dire</h3><p>Les indices correspondent à des blocs <code>unsafe</code> Rust. Leur présence ne prouve pas qu’il existe des vulnérabilités.</p></article>
+      <article class="card"><h3>Branche principale</h3><div class="stat">10</div><p>Points de revue : 8 blocs <code>unsafe</code> et 2 actions CI à référence mutable, sur 13 fichiers.</p></article>
+      <article class="card"><h3>Branche Wayland active</h3><div class="stat">42</div><p>Points de revue : 40 blocs <code>unsafe</code> et 2 actions CI à référence mutable, sur 30 fichiers.</p></article>
+      <article class="card"><h3>Ce que ces chiffres veulent dire</h3><p>Il s’agit d’indices de revue humaine, pas de vulnérabilités démontrées. Ce cliché historique est daté et peut différer des futurs audits.</p></article>
     </div>
-    <p><a href="https://github.com/Ruraam/GitAudit-AI/actions">Consulter les exécutions GitHub Actions et les artefacts disponibles</a></p>
+    <p><a href="examples/bubblewm-snapshot.json">Voir le résumé JSON archivé dans le dépôt</a> et <a href="https://github.com/Ruraam/GitAudit-AI/actions/runs/44971101170">le journal d’exécution original</a> (22 novembre 2026). Les artefacts complets des Actions peuvent expirer.</p>
   </section>
   <section class="wrap" id="utilisation">
     <h2>Obtenir un rapport pour un dépôt</h2>
