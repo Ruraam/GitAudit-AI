@@ -4,12 +4,13 @@ GitAudit AI est un **prototype d'analyse statique de dépôts GitHub publics**, 
 
 > ⚠️ Ce n'est **pas** un audit de sécurité complet. Les résultats sont des indices heuristiques à vérifier : il existe des faux positifs et des faux négatifs.
 
-## Fonctionnement du prototype (v0.5 en développement)
+## Fonctionnement du prototype (v0.6 en développement)
 
 - Accepte uniquement une adresse `owner/repo` ou `https://github.com/owner/repo`.
 - Télécharge un instantané de la **branche par défaut ou d'une référence choisie** (branche, tag ou SHA) via l'API GitHub.
 - Inspecte des fichiers source **sans exécuter le code cible** et **sans extraire l'archive sur disque**.
 - Repère **62 motifs heuristiques** en Python, Rust, Bash, JavaScript/TypeScript, Go, Java, Kotlin, C/C++, PHP, Ruby, Swift, C#, PowerShell, **Dart/Flutter, Lua, SQL, Terraform et Docker/Compose**. Les alertes sont des points à examiner, pas une preuve de faille.
+- Vérifie également **9 indices dans les fichiers de CI et de dépendances** : épinglage des GitHub Actions, permissions du jeton, `pull_request_target`, versions NPM flottantes, téléchargements HTTP, dépendances Python et Cargo non fixées. **71 règles** au total ; ce n'est pas une base de vulnérabilités connues.
 - Génère des rapports **Markdown**, **JSON** et **HTML autonome** lisible dans un navigateur, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
 - Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
 - Chaque règle propose : *pourquoi examiner*, *action recommandée* et *validation*. Les conseils figurent dans le Markdown et l'HTML.
@@ -58,7 +59,7 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 - L'HTML utilise **des styles intégrés uniquement**, aucune ressource externe et une politique de sécurité restrictive (CSP) ; les contenus issus des dépôts sont échappés pour limiter l'injection HTML.
 - Les archives dépassant 20 Mio sont refusées ; les analyses trop volumineuses sont signalées comme partielles.
 - Une référence Git demandée est strictement validée avant téléchargement ; seules des références de caractères simples sont acceptées.
-- L'analyseur vérifie des motifs dans les fichiers, pas les problèmes de logique métier ni l'ensemble des dépendances.
+- L'analyseur vérifie des motifs et certains manifestes locaux, **sans résoudre ni télécharger les dépendances**. Il n'effectue pas de comparaison avec une base CVE/OSV, n'analyse pas les lockfiles ni les permissions effectives GitHub Actions.
 
 ## Feuille de route
 
@@ -67,7 +68,8 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 3. **V0.3 (en cours)** : rapports HTML autonomes, recommandations humaines par règle et vitrine statique. **Ce n'est pas encore un site public d'audit automatisé**.
 4. **V0.4** : 40 règles et couverture de 13 familles de langages, tests positifs/négatifs.
 5. **V0.5 (en cours)** : 22 nouvelles règles pour Dart/Flutter, Lua, SQL, Terraform, Dockerfile et Docker Compose ; couverture par nom et extension, tests de non-régression. Voir [Matrice de couverture](docs/COVERAGE.md).
-6. **À suivre** : parseurs/AST dédiés, autres formats d'infrastructure, analyse de dépendances et de supply chain ; compilation, lint et tests d'intégration uniquement avec consentement explicite et isolation adaptés.
-7. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
+6. **V0.6 (en cours)** : 9 règles supplémentaires pour workflows GitHub Actions et manifestes `package.json`, `requirements*.txt`, `Cargo.toml`, avec tests positifs et négatifs.
+7. **À suivre** : parseurs/AST dédiés, dépendances vérifiées via bases CVE/OSV, SBOM, configurations CI complètes et supply chain ; compilation, lint et tests d'intégration uniquement avec consentement explicite et isolation adaptés.
+8. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
 
 Ce projet est indépendant de BubbleOS et n'y apporte aucune modification.
