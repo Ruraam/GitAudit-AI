@@ -105,7 +105,7 @@ class LandingPageTests(unittest.TestCase):
         self.assertIn("actions/runs/44971101170", self.page)
 
     def test_actual_number_is_rules_not_findings(self):
-        self.assertIn("71 règles heuristiques", self.page)
+        self.assertIn("75 règles heuristiques", self.page)
         self.assertNotIn("71 indices heuristiques", self.page)
 
     def test_no_payment_or_sales_call_to_action(self):
