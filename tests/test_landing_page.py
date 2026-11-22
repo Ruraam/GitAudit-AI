@@ -78,6 +78,10 @@ class LandingPageTests(unittest.TestCase):
         self.assertIn("22 novembre 2026", self.page)
         self.assertIn("ne sont pas des indicateurs actualisés", self.page)
 
+    def test_rule_count_is_current(self):
+        self.assertIn("71 indices heuristiques", self.page)
+        self.assertIn("workflows GitHub Actions", self.page)
+
     def test_no_payment_or_sales_call_to_action(self):
         self.assertIn("Aucun service commercial ou paiement activé", self.page)
         self.assertNotIn("<form", self.page.lower())
