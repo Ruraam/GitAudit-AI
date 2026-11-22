@@ -15,6 +15,8 @@ from urllib.error import URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
+from audit_filters import python_code_lines, rust_scan_views, shell_without_comments
+
 MAX_DOWNLOAD = 20 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 5000
 MAX_ARCHIVE_UNCOMPRESSED = 150 * 1024 * 1024
@@ -46,6 +48,7 @@ class Rule:
     suffixes: frozenset[str] | None
     advice: str
     skip_comments: bool = False
+    category: str = "risk"
 
 
 @dataclass(frozen=True)
@@ -56,6 +59,7 @@ class Finding:
     path: str
     line: int
     advice: str
+    category: str = "risk"
 
 
 @dataclass
@@ -97,12 +101,12 @@ RULES = (
     Rule("RS001", "low", "Bloc unsafe Rust à examiner",
          re.compile(r"\bunsafe\s*\{"), frozenset({".rs"}),
          "Documenter les invariants de sûreté et vérifier leur maintien.",
-         skip_comments=True),
+         skip_comments=True, category="review"),
     Rule("RS002", "medium", "Transmutation Rust à examiner",
          re.compile(r"\b(?:std::mem::)?transmute\s*(?:::\s*<[^>]+>)?\s*\("),
          frozenset({".rs"}),
          "Vérifier les tailles, alignements, représentations et invariants.",
-         skip_comments=True),
+         skip_comments=True, category="review"),
     Rule("RS003", "high", "Validation TLS désactivée en Rust",
          re.compile(r"\bdanger_accept_invalid_(?:certs|hostnames)\s*\(\s*true\s*\)"),
          frozenset({".rs"}),
@@ -134,13 +138,14 @@ RULES = (
     Rule("SH005", "low", "Arrêt sur erreur désactivé dans un script",
          re.compile(r"\bset\s+\+e(?:\s|$)"), SHELL,
          "Vérifier que la désactivation temporaire du contrôle des erreurs est justifiée.",
-         skip_comments=True),
+         skip_comments=True, category="review"),
     Rule("GEN001", "high", "En-tête de clé privée détecté",
          re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----"), None,
          "Vérifier si la clé est réelle ; la révoquer et la remplacer si elle a été exposée."),
     Rule("GEN002", "low", "Marqueur TODO/FIXME",
          re.compile(r"\b(?:TODO|FIXME)\b"), None,
-         "Vérifier si le travail signalé est toujours nécessaire."),
+         "Vérifier si le travail signalé est toujours nécessaire.",
+         category="maintenance"),
 )
 
 
@@ -257,16 +262,30 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             lines = source.decode("utf-8", errors="replace").splitlines()
             result.scanned_lines += len(lines)
             suffix = rel.suffix.lower()
+            python_code = python_code_lines(lines) if suffix in PY else None
+            rust_views = rust_scan_views(lines) if suffix == ".rs" else None
             for line_number, line in enumerate(lines, 1):
                 for rule in RULES:
                     if rule.suffixes is not None and suffix not in rule.suffixes:
                         continue
-                    if rule.skip_comments and is_comment_line(line, suffix):
-                        continue
-                    if rule.pattern.search(line):
+                    candidate = line
+                    if rule.skip_comments:
+                        if python_code is not None:
+                            candidate = python_code[line_number - 1]
+                        elif rust_views is not None:
+                            without_comments, only_code = rust_views[line_number - 1]
+                            candidate = (
+                                without_comments if rule.identifier == "RS004"
+                                else only_code
+                            )
+                        elif suffix in SHELL:
+                            candidate = shell_without_comments(line)
+                        elif is_comment_line(line, suffix):
+                            continue
+                    if rule.pattern.search(candidate):
                         result.findings.append(Finding(
                             rule.identifier, rule.severity, rule.title,
-                            str(rel), line_number, rule.advice,
+                            str(rel), line_number, rule.advice, rule.category,
                         ))
                         if len(result.findings) >= MAX_FINDINGS:
                             result.partial = True
@@ -281,6 +300,10 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
 def render_markdown(result: AuditResult) -> str:
     counts = {level: sum(f.severity == level for f in result.findings)
               for level in ("high", "medium", "low")}
+    categories = {
+        category: sum(f.category == category for f in result.findings)
+        for category in ("risk", "review", "maintenance")
+    }
     rows = [
         "# Rapport GitAudit AI v0.1",
         "",
@@ -295,19 +318,22 @@ def render_markdown(result: AuditResult) -> str:
         f"- Indices élevés : **{counts['high']}**",
         f"- Indices moyens : **{counts['medium']}**",
         f"- Indices faibles : **{counts['low']}**",
+        f"- Risques potentiels à vérifier : **{categories['risk']}**",
+        f"- Points de revue : **{categories['review']}**",
+        f"- Maintenance : **{categories['maintenance']}**",
         f"- Analyse partielle / limite atteinte : **{'oui' if result.partial else 'non'}**",
         "",
         "## Constats",
         "",
     ]
     if result.findings:
-        rows += ["| Niveau | Règle | Emplacement | Indice | Conseil |",
-                 "|---|---|---|---|---|"]
+        rows += ["| Niveau | Nature | Règle | Emplacement | Indice | Conseil |",
+                 "|---|---|---|---|---|---|"]
         for finding in result.findings:
             # Never print source lines, matched values, or potential secret material.
             safe_path = re.sub(r"[^A-Za-z0-9_./-]", "_", finding.path)[:200]
             rows.append(
-                f"| {finding.severity} | {finding.rule} | "
+                f"| {finding.severity} | {finding.category} | {finding.rule} | "
                 f"`{safe_path}:{finding.line}` | {finding.title} | {finding.advice} |"
             )
     else:
@@ -316,6 +342,7 @@ def render_markdown(result: AuditResult) -> str:
         "",
         "## Limites importantes",
         "",
+        "- Les catégories « risk », « review » et « maintenance » sont des aides au tri.",
         "- Les règles sont heuristiques : faux positifs et faux négatifs possibles.",
         "- Un niveau « high » est une priorité de revue, pas une vulnérabilité prouvée.",
         "- Un résultat vide ne signifie jamais que le dépôt est sécurisé.",
