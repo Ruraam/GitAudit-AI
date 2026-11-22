@@ -1,6 +1,6 @@
 # GitAudit AI — couverture et limites
 
-**État du prototype : v0.4 (branche de développement)**. GitAudit AI lit statiquement des fichiers texte sélectionnés. Les règles produisent des **indices heuristiques à vérifier**, jamais des vulnérabilités confirmées. Aucun code du dépôt cible n'est exécuté.
+**État du prototype : v0.5 (branche de développement)**. GitAudit AI lit statiquement des fichiers texte sélectionnés. Les règles produisent des **indices heuristiques à vérifier**, jamais des vulnérabilités confirmées. Aucun code du dépôt cible n'est exécuté.
 
 ## Langages ciblés et familles de règles
 
@@ -19,8 +19,14 @@
 | Swift | `.swift` | `try!` |
 | C# | `.cs` | `BinaryFormatter`, `Process.Start` |
 | PowerShell | `.ps1` | `Invoke-Expression`, `-SkipCertificateCheck` |
+| Dart / Flutter | `.dart` | certificat TLS non vérifié, WebView JavaScript non restreint, processus externes |
+| Lua | `.lua` | `loadstring`, `load`, `os.execute`, `io.popen` |
+| SQL (selon le dialecte) | `.sql` | `GRANT ALL ... TO PUBLIC`, `EXECUTE IMMEDIATE`, `xp_cmdshell` |
+| Terraform / HCL | `.tf`, `.tfvars` | accès public, ACL de stockage, IPv4 ouvert, chiffrement, destruction et snapshot |
+| Dockerfile / Containerfile | `Dockerfile*`, `Containerfile*` | tag `latest`, scripts distants, `USER root`, `ADD` distant |
+| Docker Compose | `compose*.yml/.yaml`, `docker-compose*.yml/.yaml` | `privileged: true`, `network_mode: host` |
 
-**40 règles au total**, dont 20 nouvelles en v0.4. Les fichiers YAML, JSON, TOML, HTML, Makefile et Dockerfile peuvent être examinés par certaines règles génériques mais **ne bénéficient pas d'une analyse de sécurité spécifique à leur format**.
+**62 règles au total**, dont 22 nouvelles en v0.5. Les fichiers YAML, JSON, TOML, HTML et Makefile bénéficient de quelques règles génériques ; seuls les **fichiers Compose nommés explicitement** reçoivent les deux règles Docker Compose. Les fichiers HCL génériques `.hcl` sont lus, mais **pas couverts par les règles Terraform limitées à `.tf` / `.tfvars`**. Les fichiers `.dockerfile` sont lus, mais les règles Docker ciblent les noms Dockerfile/Containerfile habituels.
 
 ## Les types de tests réellement automatisés
 
@@ -41,11 +47,13 @@ La génération de rapports et les règles sont testées, mais cela ne signifie 
 3. **Configurations** : GitHub Actions, Docker, IaC, Kubernetes, permissions CI, infrastructure cloud, secrets dans l'historique Git.
 4. **Tests de projet en environnement isolé** : lint, compilation, tests unitaires et d'intégration. Cela **nécessite un consentement explicite**, une isolation forte, des quotas, et ne doit jamais exécuter automatiquement le code non fiable d'un dépôt public.
 5. **Fuzzing / mutation / propriétés** : générer des variations déterministes et mesurer si nos règles résistent aux changements de syntaxe et détectent les anomalies introduites.
-6. **Langages et écosystèmes à venir** : Dart / Flutter, Lua, R, Scala, Elixir, Haskell, Objective-C, Perl, SQL, Terraform, Docker Compose et autres.
+6. **Langages et écosystèmes à venir** : R, Scala, Elixir, Haskell, Objective-C, Perl, Zig, Nix, Kubernetes, Helm et autres ; approfondir Dart, Lua, SQL, Terraform et Docker avec de vrais parseurs et règles contextuelles.
 
 ## Garde-fous
 
-- Aucun langage n'est audité exhaustivement, même si son extension est reconnue.
+- Aucun langage ni format d'infrastructure n'est audité exhaustivement, même si son extension est reconnue. Les recherches sont principalement **monolignes** : elles peuvent manquer des déclarations multilignes et les valeurs interpolées.
+- Les accès publics Terraform ou Docker peuvent être intentionnels. Le rapport les signale comme **points de revue**, pas comme failles confirmées.
+- Les filtres de commentaires / chaînes sont volontairement simplifiés ; ils ne comprennent pas toutes les chaînes Lua longues, syntaxes SQL, interpolations HCL et Dockerfile multiligne.
 - Les catégories `risk`, `review` et `maintenance` sont destinées au tri ; `high` ne signifie pas « faille prouvée ».
 - Le moteur n'exécute ni compilateur, ni installateur, ni tests contenus dans le dépôt analysé.
 - Les archives ont une taille maximale ; les résultats partiels sont signalés.
