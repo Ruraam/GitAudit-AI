@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GitAudit AI v0.1: bounded, read-only, heuristic GitHub source audit."""
+"""GitAudit AI: bounded, read-only, heuristic GitHub source audit."""
 
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from polyglot_rules import C_STYLE_SUFFIXES, HASH_COMMENT_SUFFIXES, SPECS
 from expansion_filters import expansion_views
 from expansion_rules import EXPANSION_SPECS
 from metadata_rules import review_metadata
+from version import __version__
 
 MAX_DOWNLOAD = 20 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 5000
@@ -37,6 +38,23 @@ SOURCE_SUFFIXES = frozenset({
     ".hcl", ".dockerfile", ".yaml", ".yml", ".toml", ".json", ".html",
 })
 SOURCE_NAMES = frozenset({"Dockerfile", "Containerfile", "Makefile", "requirements.txt"})
+SENSITIVE_NAMES = frozenset({
+    ".env", ".npmrc", ".pypirc", "id_rsa", "id_ed25519", "credentials",
+})
+NOISY_CODE_PARTS = frozenset({"tests", "test", "fixtures", "examples", "docs"})
+SECRET_RULE_IDS = frozenset({"GEN001", "GEN003", "GEN004", "GEN005", "GEN006"})
+
+
+def is_sensitive_file(path: PurePosixPath) -> bool:
+    """Select small non-code files for secret-pattern checks, never execution."""
+    name = path.name.lower()
+    return (
+        name in SENSITIVE_NAMES
+        or name.startswith(".env.")
+        or path.suffix.lower() in {".pem", ".key"}
+        or name == "readme.md"
+    )
+
 
 
 def is_requirements_name(name: str) -> bool:
@@ -94,13 +112,13 @@ class AuditResult:
 
 RULES = (
     Rule("PY001", "medium", "Appel à eval()", re.compile(r"\beval\s*\("), PY,
-         "Préférer un analyseur dédié et vérifier les entrées."),
+         "Préférer un analyseur dédié et vérifier les entrées.", skip_comments=True),
     Rule("PY002", "medium", "shell=True en Python", re.compile(r"\bshell\s*=\s*True\b"), PY,
-         "Éviter le shell pour les commandes construites avec des entrées externes."),
+         "Éviter le shell pour les commandes construites avec des entrées externes.", skip_comments=True),
     Rule("PY003", "medium", "Désérialisation pickle", re.compile(r"\bpickle\.loads?\s*\("), PY,
-         "Ne pas désérialiser de contenu non fiable avec pickle."),
+         "Ne pas désérialiser de contenu non fiable avec pickle.", skip_comments=True),
     Rule("PY004", "high", "Vérification TLS désactivée", re.compile(r"\bverify\s*=\s*False\b"), PY,
-         "Conserver la validation des certificats TLS."),
+         "Conserver la validation des certificats TLS.", skip_comments=True),
     Rule("PY005", "medium", "Exécution d'une commande via os.system()",
          re.compile(r"\bos\.system\s*\("), PY,
          "Préférer subprocess avec liste d'arguments et sans shell.",
@@ -137,7 +155,7 @@ RULES = (
          "Préférer des commandes directes ; traiter les paramètres externes comme non fiables.",
          skip_comments=True),
     Rule("JS001", "medium", "Appel à eval() en JavaScript", re.compile(r"\beval\s*\("), JS,
-         "Éviter d'évaluer du texte comme du code."),
+         "Éviter d'évaluer du texte comme du code.", skip_comments=True),
     Rule("SH001", "high", "Script téléchargé exécuté directement",
          re.compile(r"\b(?:curl|wget)\b.*\|\s*(?:sudo\s+)?(?:sh|bash)\b"), SHELL,
          "Télécharger, vérifier et examiner le script avant son exécution."),
@@ -159,8 +177,20 @@ RULES = (
          "Vérifier que la désactivation temporaire du contrôle des erreurs est justifiée.",
          skip_comments=True, category="review"),
     Rule("GEN001", "high", "En-tête de clé privée détecté",
-         re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----"), None,
+         re.compile(r"-----BEGIN (?:(?:RSA |OPENSSH |EC |DSA |ENCRYPTED )?PRIVATE KEY|PGP PRIVATE KEY BLOCK)-----"), None,
          "Vérifier si la clé est réelle ; la révoquer et la remplacer si elle a été exposée."),
+    Rule("GEN003", "high", "Identifiant AWS ressemblant à une clé d'accès",
+         re.compile(r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b"), None,
+         "Vérifier et révoquer cet identifiant s'il correspond à une vraie clé."),
+    Rule("GEN004", "high", "Jeton GitHub potentiellement exposé",
+         re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b"), None,
+         "Vérifier la provenance du jeton et le révoquer s'il est actif."),
+    Rule("GEN005", "high", "Jeton Slack potentiellement exposé",
+         re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{16,}\b"), None,
+         "Vérifier le jeton Slack et le révoquer en cas d'exposition réelle."),
+    Rule("GEN006", "high", "Clé Stripe de production potentiellement exposée",
+         re.compile(r"\bsk_live_[A-Za-z0-9]{16,}\b"), None,
+         "Vérifier la clé de production et la remplacer si elle est réelle."),
     Rule("GEN002", "low", "Marqueur TODO/FIXME",
          re.compile(r"\b(?:TODO|FIXME)\b"), None,
          "Vérifier si le travail signalé est toujours nécessaire.",
@@ -235,7 +265,7 @@ def download_archive(repository: str, ref: str | None = None) -> bytes:
     if ref is not None:
         url += "/" + quote(normalize_ref(ref), safe="/")
     request = Request(url, headers={
-        "User-Agent": "GitAudit-AI/0.1",
+        "User-Agent": f"GitAudit-AI/{__version__}",
         "Accept": "application/vnd.github+json",
     })
     with urlopen(request, timeout=30) as response:
@@ -274,7 +304,8 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
             if (
                 any(part in IGNORED_PARTS for part in rel.parts)
                 or (rel.suffix.lower() not in SOURCE_SUFFIXES and rel.name not in SOURCE_NAMES
-                    and not is_dockerfile_name(rel.name) and not is_requirements_name(rel.name))
+                    and not is_dockerfile_name(rel.name) and not is_requirements_name(rel.name)
+                    and not is_sensitive_file(rel))
                 or member.size > MAX_FILE_BYTES
             ):
                 result.skipped_files += 1
@@ -307,8 +338,15 @@ def analyze_archive(payload: bytes, repository: str, reference: str | None = Non
                 None
             )
             expansion_code = expansion_views(lines, dialect) if dialect else None
+            sensitive_only = rel.suffix.lower() not in SOURCE_SUFFIXES and (
+                rel.name not in SOURCE_NAMES
+                or rel.name == "README.md"
+            ) and not is_dockerfile_name(rel.name) and not is_requirements_name(rel.name)
+            is_example_code = any(part.lower() in NOISY_CODE_PARTS for part in rel.parts[:-1])
             for line_number, line in enumerate(lines, 1):
                 for rule in RULES:
+                    if (sensitive_only or is_example_code) and rule.identifier not in SECRET_RULE_IDS:
+                        continue
                     if rule.suffixes is not None and suffix not in rule.suffixes:
                         continue
                     if rule.path_pattern is not None and not rule.path_pattern.search(str(rel)):
@@ -374,7 +412,7 @@ def render_markdown(result: AuditResult) -> str:
         for category in ("risk", "review", "maintenance")
     }
     rows = [
-        "# Rapport GitAudit AI v0.1",
+        f"# Rapport GitAudit AI v{__version__}",
         "",
         f"**Dépôt :** `{result.repository}`",
         f"**Périmètre :** {result.reference or 'branche par défaut'}, analyse statique sans exécution.",
