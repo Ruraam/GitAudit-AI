@@ -203,3 +203,64 @@ def hash_language_code(line: str, *, powershell: bool = False) -> str:
                 result[remainder] = " "
             break
     return "".join(result)
+
+
+def js_scan_views(lines: list[str]) -> list[tuple[str, str]]:
+    """Mask JS/TS single/double/template strings and both comment forms.
+
+    Returns (comment-free, comments-and-literals-free) lines with intact
+    offsets. Template interpolations and regex literals are not parsed,
+    so this is a lightweight heuristic filter, not a JavaScript parser.
+    """
+    output: list[tuple[str, str]] = []
+    block_comment = False
+    quote: str | None = None
+    escaped = False
+
+    for line in lines:
+        no_comments = list(line)
+        only_code = list(line)
+        index = 0
+
+        while index < len(line):
+            if block_comment:
+                end = line.find("*/", index)
+                finish = len(line) if end < 0 else end + 2
+                _blank(no_comments, index, finish)
+                _blank(only_code, index, finish)
+                index = finish
+                if end >= 0:
+                    block_comment = False
+                continue
+
+            if quote is not None:
+                char = line[index]
+                _blank(only_code, index, index + 1)
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == quote:
+                    quote = None
+                index += 1
+                continue
+
+            if line.startswith("//", index):
+                _blank(no_comments, index, len(line))
+                _blank(only_code, index, len(line))
+                break
+            if line.startswith("/*", index):
+                block_comment = True
+                _blank(no_comments, index, index + 2)
+                _blank(only_code, index, index + 2)
+                index += 2
+                continue
+            if line[index] in ("'", '"', chr(96)):
+                quote = line[index]
+                escaped = False
+                _blank(only_code, index, index + 1)
+            index += 1
+
+        output.append(("".join(no_comments), "".join(only_code)))
+
+    return output
