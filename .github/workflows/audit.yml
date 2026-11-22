@@ -1,0 +1,41 @@
+name: Audit a public GitHub repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Public repository (owner/repo or https://github.com/owner/repo)"
+        required: true
+        default: "Ruraam/BubbleWM"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout auditor
+        uses: actions/checkout@v4
+
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Run read-only audit
+        env:
+          TARGET_REPOSITORY: ${{ inputs.repository }}
+        run: |
+          python3 gitaudit.py "$TARGET_REPOSITORY" \
+            --report report.md --json report.json
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitaudit-report
+          path: |
+            report.md
+            report.json
+          retention-days: 7
+          if-no-files-found: error
