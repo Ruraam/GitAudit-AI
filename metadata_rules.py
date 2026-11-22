@@ -93,7 +93,7 @@ SPECS: tuple[MetadataSpec, ...] = (
         "Éviter la contrainte de version * lorsque possible et maintenir Cargo.lock selon le type de projet.",
         "review",
         "La déclaration Cargo comporte une contrainte * qui accepte de multiples versions.",
-        "Adopter une plage de versions réfléchie et vérifier les mises à jour de dépendances.",
+        "Adopter une plage de versions réfléchie et maintenir Cargo.lock selon le type de projet.",
         "Tester cargo update et les builds reproductibles dans un environnement isolé autorisé.",
     ),
 )
