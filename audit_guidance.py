@@ -143,10 +143,19 @@ GUIDANCE: dict[str, Guidance] = {
     ),
 }
 
-# Keep guidance coverage exact as more source languages are introduced.
+# Keep guidance coverage exact while avoiding heterogeneous tuple inference
+# errors in static type checkers (each rule catalog has a distinct dataclass).
 GUIDANCE.update({
     spec.identifier: Guidance(spec.meaning, spec.action, spec.verify)
-    for spec in (*SPECS, *EXPANSION_SPECS, *METADATA_SPECS)
+    for spec in SPECS
+})
+GUIDANCE.update({
+    spec.identifier: Guidance(spec.meaning, spec.action, spec.verify)
+    for spec in EXPANSION_SPECS
+})
+GUIDANCE.update({
+    spec.identifier: Guidance(spec.meaning, spec.action, spec.verify)
+    for spec in METADATA_SPECS
 })
 
 def guidance_for(rule_id: str) -> Guidance:
