@@ -7,6 +7,7 @@ on:
       - feat/rules-rust-bash-python-v0.2
       - feat/precision-triage-v0.2
       - feat/actionable-html-reports-v0.3
+      - feat/polyglot-rules-v0.4
   workflow_dispatch:
 
 permissions:
