@@ -79,7 +79,7 @@ class LandingPageTests(unittest.TestCase):
         self.assertIn("ne sont pas des indicateurs actualisés", self.page)
 
     def test_rule_count_is_current(self):
-        self.assertIn("71 règles heuristiques", self.page)
+        self.assertIn("75 règles heuristiques", self.page)
         self.assertIn("workflows GitHub Actions", self.page)
 
     def test_unlicensed_project_is_not_advertised_as_open_source(self):
