@@ -2,7 +2,9 @@
 
 GitAudit AI est un **prototype expérimental d'analyse statique de dépôts GitHub publics**, lancé avec **0 € de budget initial**. Malgré le nom historique « AI », **le moteur actuel n'utilise pas de modèle d'IA** : il applique des heuristiques déterministes, sans API payante ni serveur.
 
-**Licence : aucune licence de réutilisation n'est encore publiée.** Le code est visible publiquement, mais cela ne lui confère pas automatiquement le statut « open source » ni le droit de redistribution. Ne pas promouvoir le projet comme logiciel libre tant qu'une licence n'a pas été choisie et ajoutée par le titulaire des droits.
+[![Licence AGPL-3.0-only](docs/assets/license-agpl.svg)](LICENSE)
+
+**Licence proposée pour consolidation : GNU Affero General Public License v3.0 uniquement (SPDX : `AGPL-3.0-only`).** Le texte intégral et inchangé figure dans [LICENSE](LICENSE) sur cette branche de préparation. La licence s'appliquera au code de la version consolidée **après sa fusion**, sous réserve de vérifier les droits sur les contributions et contenus tiers. L'AGPL autorise les usages commerciaux, sous ses conditions (notamment la mise à disposition du code source correspondant dans les cas prévus par la licence, y compris certaines interactions réseau avec une version modifiée).
 
 > ⚠️ Ce n'est **pas** un audit de sécurité complet. Les résultats sont des indices heuristiques à vérifier : il existe des faux positifs et des faux négatifs.
 
@@ -49,9 +51,16 @@ Pour la publier **après validation et fusion des PR empilées** : dans le dép�
 
 Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à chaque changement. Le workflow **Live smoke test - BubbleWM** exécute des audits réels et limités sur ses branches `main` et `feature/wlr-layer-shell` dans certaines branches de développement autorisées. Les audits libres de tout dépôt restent **manuels**.
 
+## Licence et contributions
+
+- Licence de la version en préparation : **GNU AGPL-3.0-only**, [texte intégral](LICENSE).
+- La licence ne garantit ni absence de vulnérabilités ni maintenance ; voir [SECURITY.md](SECURITY.md).
+- Les contributeurs doivent avoir le droit de publier leurs contributions sous AGPL-3.0-only ; aucun droit sur du code tiers ne peut être présumé.
+- **La PR de consolidation est proposée mais non fusionnée** : le `main` public conserve son statut actuel tant que l'intégration n'a pas été approuvée.
+
 ## Processus et statut
 
-- La version **0.7.0.dev0** correspond à une branche de développement **non publiée**. L'option `--version` est disponible ; aucune release GitHub ni GitHub Pages n'a encore été annoncée.
+- La version **0.7.0.dev0** et sa licence AGPL-3.0-only sont proposées dans une branche de consolidation **non publiée**. L'option `--version` est disponible ; aucune release GitHub ni GitHub Pages n'a encore été annoncée.
 - La vitrine conservée dans `docs/index.html` est **une proposition non publiée**. Un [résumé historique BubbleWM](docs/examples/bubblewm-snapshot.json) et son [journal GitHub Actions](https://github.com/Ruraam/GitAudit-AI/actions/runs/44971101170) indiquent la provenance de ses chiffres datés.
 - Voir [SECURITY.md](SECURITY.md) pour les signalements sensibles, [CONTRIBUTING.md](CONTRIBUTING.md) pour les contributions, et [CHANGELOG.md](CHANGELOG.md) pour les changements en développement.
 
