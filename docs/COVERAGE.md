@@ -26,7 +26,7 @@
 | Dockerfile / Containerfile | `Dockerfile*`, `Containerfile*` | tag `latest`, scripts distants, `USER root`, `ADD` distant |
 | Docker Compose | `compose*.yml/.yaml`, `docker-compose*.yml/.yaml` | `privileged: true`, `network_mode: host` |
 
-**71 règles au total**, dont 9 règles supplémentaires en v0.6 portant sur les workflows et les manifestes. Les 62 règles précédentes restent actives. Les fichiers YAML, JSON, TOML, HTML et Makefile bénéficient de quelques règles génériques ; seuls les **fichiers Compose nommés explicitement** reçoivent les deux règles Docker Compose. Les fichiers HCL génériques `.hcl` sont lus, mais **pas couverts par les règles Terraform limitées à `.tf` / `.tfvars`**. Les fichiers `.dockerfile` sont lus, mais les règles Docker ciblent les noms Dockerfile/Containerfile habituels.
+**75 règles au total en v0.7 de développement** : 71 règles du lot v0.6, plus 4 motifs supplémentaires de jetons potentiellement exposés. Les 62 règles précédentes restent actives. Les fichiers YAML, JSON, TOML, HTML et Makefile bénéficient de quelques règles génériques ; seuls les **fichiers Compose nommés explicitement** reçoivent les deux règles Docker Compose. Les fichiers HCL génériques `.hcl` sont lus, mais **pas couverts par les règles Terraform limitées à `.tf` / `.tfvars`**. Les fichiers `.dockerfile` sont lus, mais les règles Docker ciblent les noms Dockerfile/Containerfile habituels.
 
 ## Workflows CI et dépendances : contrôle v0.6
 
