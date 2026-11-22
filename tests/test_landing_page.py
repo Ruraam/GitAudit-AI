@@ -94,7 +94,11 @@ class LandingPageTests(unittest.TestCase):
     def test_unlicensed_project_is_not_advertised_as_open_source(self):
         self.assertNotIn("Prototype open source", self.page)
         self.assertNotIn("prototype libre", self.page)
-        self.assertIn("pas encore d’une licence", self.page)
+        self.assertIn("Licence GNU AGPL-3.0-only incluse", self.page)
+        self.assertIn("en attente de fusion vers main", self.page)
+
+    def test_license_link_references_main_after_merge(self):
+        self.assertIn("https://github.com/Ruraam/GitAudit-AI/blob/main/LICENSE", self.page)
 
     def test_no_model_ai_claim(self):
         self.assertIn("aucun modèle d’IA n’est utilisé", self.page)
