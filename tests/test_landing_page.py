@@ -79,8 +79,25 @@ class LandingPageTests(unittest.TestCase):
         self.assertIn("ne sont pas des indicateurs actualisés", self.page)
 
     def test_rule_count_is_current(self):
-        self.assertIn("71 indices heuristiques", self.page)
+        self.assertIn("71 règles heuristiques", self.page)
         self.assertIn("workflows GitHub Actions", self.page)
+
+    def test_unlicensed_project_is_not_advertised_as_open_source(self):
+        self.assertNotIn("Prototype open source", self.page)
+        self.assertNotIn("prototype libre", self.page)
+        self.assertIn("pas encore d’une licence", self.page)
+
+    def test_no_model_ai_claim(self):
+        self.assertIn("aucun modèle d’IA n’est utilisé", self.page)
+
+    def test_snapshot_values_are_grounded_in_verified_run(self):
+        self.assertIn("Branche principale</h3><div class=\"stat\">10</div>", self.page)
+        self.assertIn("Branche Wayland active</h3><div class=\"stat\">42</div>", self.page)
+        self.assertIn("actions/runs/44971101170", self.page)
+
+    def test_actual_number_is_rules_not_findings(self):
+        self.assertIn("71 règles heuristiques", self.page)
+        self.assertNotIn("71 indices heuristiques", self.page)
 
     def test_no_payment_or_sales_call_to_action(self):
         self.assertIn("Aucun service commercial ou paiement activé", self.page)
