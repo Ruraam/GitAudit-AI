@@ -206,7 +206,7 @@ EXPANSION_SPECS: tuple[ExpansionSpec, ...] = (
     ),
     ExpansionSpec(
         "DC002", "medium", "Docker Compose : réseau hôte",
-        r"(?i)^\s*network_mode\s*:\s*['\"]?host(?:['\"]?\s|$)", (".yml", ".yaml"),
+        r"(?i)^\s*network_mode\s*:\s*['\"]?host['\"]?(?:\s|$)", (".yml", ".yaml"),
         "Vérifier la nécessité de partager le réseau de l'hôte.", "review",
         "network_mode: host supprime l'isolation réseau habituelle du conteneur.",
         "Préférer un réseau de services dédié et publier uniquement les ports requis.",
