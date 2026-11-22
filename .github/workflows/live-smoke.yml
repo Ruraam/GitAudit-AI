@@ -6,6 +6,7 @@ on:
       - test/security-regression-suite
       - feat/rules-rust-bash-python-v0.2
       - feat/precision-triage-v0.2
+      - feat/actionable-html-reports-v0.3
   workflow_dispatch:
 
 permissions:
@@ -39,7 +40,7 @@ jobs:
           TARGET_REF: ${{ matrix.ref }}
         run: |
           python3 gitaudit.py Ruraam/BubbleWM --ref "$TARGET_REF" \
-            --report report.md --json report.json
+            --report report.md --json report.json --html report.html
 
       - name: Assert live report contract
         env:
@@ -53,6 +54,13 @@ jobs:
           report = Path("report.md")
           data = json.loads(Path("report.json").read_text(encoding="utf-8"))
           assert report.is_file() and report.stat().st_size > 0
+          html_report = Path("report.html")
+          assert html_report.is_file() and html_report.stat().st_size > 0
+          html_content = html_report.read_text(encoding="utf-8")
+          assert "<html lang=\"fr\">" in html_content
+          assert "default-src &#39;none&#39;" in html_content
+          assert "<script" not in html_content.lower()
+          assert "Constats et recommandations" in html_content
           assert data["repository"] == "Ruraam/BubbleWM"
           assert data["reference"] == os.environ["TARGET_REF"]
           assert isinstance(data["scanned_files"], int)
@@ -106,5 +114,6 @@ jobs:
           path: |
             report.md
             report.json
+            report.html
           retention-days: 7
           if-no-files-found: error
