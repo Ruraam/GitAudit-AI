@@ -203,7 +203,7 @@ def render_markdown(result: AuditResult) -> str:
     rows = [
         "# Rapport GitAudit AI v0.1",
         "",
-        f"**Dépôt :** \`{result.repository}\`",
+        f"**Dépôt :** `{result.repository}`",
         "**Périmètre :** branche par défaut, analyse statique sans exécution.",
         "",
         "## Résumé",
@@ -227,7 +227,7 @@ def render_markdown(result: AuditResult) -> str:
             safe_path = re.sub(r"[^A-Za-z0-9_./-]", "_", finding.path)[:200]
             rows.append(
                 f"| {finding.severity} | {finding.rule} | "
-                f"\`{safe_path}:{finding.line}\` | {finding.title} | {finding.advice} |"
+                f"`{safe_path}:{finding.line}` | {finding.title} | {finding.advice} |"
             )
     else:
         rows.append("Aucun indice trouvé par les règles limitées de cette version.")
