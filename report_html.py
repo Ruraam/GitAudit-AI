@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 """Self-contained, safe-to-open HTML reports for GitAudit AI.
 
 Never include source lines or matching fragments, and never load remote assets.
