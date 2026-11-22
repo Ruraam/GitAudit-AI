@@ -188,7 +188,7 @@ class ExpansionContractTests(unittest.TestCase):
     def test_report_includes_guidance_for_terraform(self):
         report = render_html(audit("main.tf", "publicly_accessible = true\n"))
         self.assertIn("TF001", report)
-        self.assertIn("Contrôler les restrictions réseau", report)
+        self.assertIn("Revoir les règles réseau", report)
 
     def test_sql_comments_preserve_line_count(self):
         lines = ["/* comment", "xp_cmdshell */", "SELECT 1"]
