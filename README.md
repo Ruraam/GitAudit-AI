@@ -4,12 +4,12 @@ GitAudit AI est un **prototype d'analyse statique de dépôts GitHub publics**, 
 
 > ⚠️ Ce n'est **pas** un audit de sécurité complet. Les résultats sont des indices heuristiques à vérifier : il existe des faux positifs et des faux négatifs.
 
-## Fonctionnement du prototype (v0.4 en développement)
+## Fonctionnement du prototype (v0.5 en développement)
 
 - Accepte uniquement une adresse `owner/repo` ou `https://github.com/owner/repo`.
 - Télécharge un instantané de la **branche par défaut ou d'une référence choisie** (branche, tag ou SHA) via l'API GitHub.
 - Inspecte des fichiers source **sans exécuter le code cible** et **sans extraire l'archive sur disque**.
-- Repère **40 motifs heuristiques** dans 13 familles de langages : Python, Rust, Bash, JavaScript/TypeScript, Go, Java, Kotlin, C/C++, PHP, Ruby, Swift, C# et PowerShell. Exemples : TLS désactivé, exécution dynamique, désérialisation, fonctions mémoire et permissions à examiner.
+- Repère **62 motifs heuristiques** en Python, Rust, Bash, JavaScript/TypeScript, Go, Java, Kotlin, C/C++, PHP, Ruby, Swift, C#, PowerShell, **Dart/Flutter, Lua, SQL, Terraform et Docker/Compose**. Les alertes sont des points à examiner, pas une preuve de faille.
 - Génère des rapports **Markdown**, **JSON** et **HTML autonome** lisible dans un navigateur, sans recopier les lignes de source ni les valeurs qui pourraient être des secrets.
 - Classe chaque résultat en **`risk` (risque potentiel)**, **`review` (revue manuelle)** ou **`maintenance`**. Un niveau de gravité exprime une **priorité de vérification**, pas une vulnérabilité confirmée.
 - Chaque règle propose : *pourquoi examiner*, *action recommandée* et *validation*. Les conseils figurent dans le Markdown et l'HTML.
@@ -65,8 +65,9 @@ Les validations automatiques (tests Python, versions 3.10 à 3.14) tournent à c
 1. **V0.1** : prototype statique et rapports, CI et exécution manuelle.
 2. **V0.2 (en cours)** : 20 règles ciblées en Rust/Bash/Python/JS ; tests positifs et négatifs, audits de branches actives, **catégorisation des constats** et filtrage de sources pour améliorer la précision.
 3. **V0.3 (en cours)** : rapports HTML autonomes, recommandations humaines par règle et vitrine statique. **Ce n'est pas encore un site public d'audit automatisé**.
-4. **V0.4 (en cours)** : 40 règles et couverture de 13 familles de langages, tests positifs/négatifs par langage, documentation de couverture. Voir [Matrice de couverture](docs/COVERAGE.md).
-5. **À suivre** : analyse AST spécifique, fichiers de configuration, tests de dépendances et de supply chain, lint et tests d'intégration uniquement avec consentement et isolation adaptés.
-6. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
+4. **V0.4** : 40 règles et couverture de 13 familles de langages, tests positifs/négatifs.
+5. **V0.5 (en cours)** : 22 nouvelles règles pour Dart/Flutter, Lua, SQL, Terraform, Dockerfile et Docker Compose ; couverture par nom et extension, tests de non-régression. Voir [Matrice de couverture](docs/COVERAGE.md).
+6. **À suivre** : parseurs/AST dédiés, autres formats d'infrastructure, analyse de dépendances et de supply chain ; compilation, lint et tests d'intégration uniquement avec consentement explicite et isolation adaptés.
+7. **Plus tard seulement** : envisager la vente de rapports, après validation de leur fiabilité et de l'intérêt réel des utilisateurs.
 
 Ce projet est indépendant de BubbleOS et n'y apporte aucune modification.
