@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 """GitAudit AI v0.5: focused Dart/Lua/SQL/Terraform/Docker review signals.
 
 A match is a lead for human review, not a proven vulnerability.
