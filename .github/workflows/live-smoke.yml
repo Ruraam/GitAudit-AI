@@ -3,14 +3,8 @@ name: Live smoke test - BubbleWM
 on:
   push:
     branches:
-      - test/security-regression-suite
-      - feat/rules-rust-bash-python-v0.2
-      - feat/precision-triage-v0.2
-      - feat/actionable-html-reports-v0.3
-      - feat/polyglot-rules-v0.4
-      - feat/dart-lua-sql-terraform-docker-v0.5
-      - feat/workflow-dependencies-v0.6
-      - fix/audit-credibility-p0
+      - main
+      - release/agpl-v0.7-consolidation
   workflow_dispatch:
 
 permissions:
