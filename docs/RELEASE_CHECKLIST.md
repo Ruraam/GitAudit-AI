@@ -48,6 +48,20 @@
 - [ ] Obtenir une **revue humaine indépendante** et l'accord explicite du
   propriétaire avant la fusion.
 
+## Publication du site et politique CSP
+
+- [ ] Vérifier que la vitrine sépare bien l'exemple historique **v0.6**
+  (13/30 fichiers, 10/42 points de revue) des audits **v0.7-dev**
+  (15/33 fichiers au dernier contrôle).
+- [ ] Vérifier que le lien de licence pointe vers un commit réel qui
+  contient le fichier, puis décider d'un lien stable vers la version publiée.
+- [ ] Si une protection anti-iframe est requise, configurer une **réponse HTTP**
+  avec `Content-Security-Policy: frame-ancestors 'none'` ou une politique
+  équivalente sur un hébergement qui permet de définir les en-têtes. La
+  directive `frame-ancestors` n'est **pas opérante** dans une balise
+  `<meta http-equiv="Content-Security-Policy">`; ne pas promettre cette
+  protection sur une page statique sans contrôle des en-têtes.
+
 ## Après la fusion (pas maintenant)
 
 - [ ] Vérifier que GitHub détecte `AGPL-3.0-only` sur `main`, et que
